@@ -8,8 +8,6 @@ import {
 
 import "./socket-settings.js";
 
-//import "https://cdn.skypack.dev/@material/web@1.0.0-pre.4/radio/radio.js";
-
 class MainPage extends LitElement {
     static get properties() {
         return {
@@ -17,7 +15,13 @@ class MainPage extends LitElement {
             narrow: { type: Boolean },
             route: { type: Object },
             panel: { type: Object },
+            data: { type: Object }
         };
+    }
+    
+    constructor(){
+        super();
+        this.data = {};
     }
 
     socket_num = 100
@@ -36,46 +40,48 @@ class MainPage extends LitElement {
         this.shadowRoot.getElementById("main-page").style.display = "flex";
     }
 
-    default_sched = {
-        "ON": ["ciao", "miao", "bao"],
-        "OFF": ["pizza", "pasta", "grullo", "pasto"]
-    }
-
-    default_maxPower = {
-        "MP" : false,
-        "max_power" : "",
-        "mode" : ""
-    }
-
-    default_parCtrl = {
-        "parCtrl" : false,
-        "threshold" : "",
-        "mode" : ""
-    }
-
     extData = {
-        "socketName" : null,
+        "deviceID" : null,
+        "deviceName" : ["a", "b", "c"],
         "HPMode" : false,
         "scheduling" : [
-            this.default_sched,
-            this.default_sched,
-            this.default_sched
+            {
+                "socketID" : 0,
+                "startSchedule" : "DD:MM:YYYY HH:MM",
+                "enableEndSchedule" : false,
+                "endSchedule" : "DD:MM:YYYY HH:MM",
+                "repeat" : 0
+            },
+            {
+                "socketID" : 1,
+                "startSchedule" : "DD:MM:YYYY HH:MM",
+                "enableEndSchedule" : false,
+                "endSchedule" : "DD:MM:YYYY HH:MM",
+                "repeat" : 0
+            },
+            {
+                "socketID" : 2,
+                "startSchedule" : "DD:MM:YYYY HH:MM",
+                "enableEndSchedule" : false,
+                "endSchedule" : "DD:MM:YYYY HH:MM",
+                "repeat" : 0
+            }
         ],
-        "maxPower" : [
-            this.default_maxPower,
-            this.default_maxPower,
-            this.default_maxPower
-        ],
-        "faultCtrl" : [false, false, false],
-        "parCtrl" : [
-            this.default_parCtrl,
-            this.default_parCtrl,
-            this.default_parCtrl
-        ],
-        "applType" : "None",
-        "faultyBehCtrl" : {
-            "FBC" : false,
-            "mode" : ""
+        "maxPowerControl" : {
+            "MPControl" : false,
+            "maxPower" : 0,
+            "MPMode" : "Notify"
+        },
+        "faultControl" : false,
+        "parasiticControl" : {
+            "parControl" : false,
+            "parThreshold" : 0,
+            "parMode" : "Manual"
+        },
+        "applianceType" : "None",
+        "faultyBehControl" : {
+            "FBControl" : false,
+            "FBMode" : ""
         }
     }
 
@@ -125,35 +131,63 @@ class MainPage extends LitElement {
         this.shadowRoot.getElementById("socket-settings").save()
     }
 
+    fetchData(){ // Fetch sockets settings
+        var url = "http://192.168.2.145:8099/getInfo?";
+        var params = {
+            table : "DeviceSettings",
+            keyName : "deviceID",
+            keyValue : "*"
+        };
+        params = new URLSearchParams(params);
+
+        fetch(url + params)
+        .then((response) => response.json())
+        .then((data) => {
+            this.data = data;
+            this.sockets = [];
+            this.data.map((socket) => this.sockets.push(socket["deviceName"]));
+        })
+        .catch(error => {
+            console.error(error); // if there's an error, it will be logged to the console
+        });
+    }
+
+    connectedCallback() {
+        super.connectedCallback();
+        this.data = false;
+        this.fetchData();
+    }
+
     render() {
-        const prese = ["Presa 0", "Presa 1", "Presa 2"]
+        //this.extData = this.getDBData();
 
-        this.data = {}
-        prese.map((item) =>
-            this.data[item] = {}
-        );
+        if(!this.data){
+            return html`
+                <div> Loading... </div>
+            `;
+        } else {
+            this.setMobileTheme();
+            return html`
+                <app-header fixed="" slot="header"> </app-header>
+                <div class="container" id="container" @err_occ=${this.errorHandler}>
+                    <div id="main-page" class="main-page" @click="${this.loadHACards}">
+                        ${this.sockets.map((item) => html`<div class="child">
+                            <ha-card outlined class="socket_button" @click="${() => this.show_socket(item)}">
+                                <div name="button_text" class="button_text">${item}</div>
+                            </ha-card>
+                        </div>`)}
+                    </div>
 
-        this.setMobileTheme();
-        return html`
-            <app-header fixed="" slot="header"> </app-header>
-            <div class="container" id="container" @err_occ=${this.errorHandler}>
-                <div id="main-page" class="main-page" @click="${this.loadHACards}">
-                    ${prese.map((item) => html`<div class="child">
-                        <ha-card outlined class="socket_button" @click="${() => this.show_socket(item)}">
-                            <div name="button_text" class="button_text">${item}</div>
-                        </ha-card>
-                    </div>`)}
+                    <socket-settings id="socket-settings" class="socket-settings" .hass=${this.hass} .extData=${this.extData}></socket-settings>
+                    <div class="btn_cont" id="btn_cont">
+                        <mwc-button class="back_btn" id="back_btn" @click=${this.hide_socket}>
+                            <ha-icon class="arrowLeft" id="arrowLeft" icon="mdi:arrow-left"></ha-icon>
+                        </mwc-button>
+                        <mwc-button class="save_btn" id="save_btn" label="Save" @click=${this.save}></mwc-button>
+                    </div>
                 </div>
-
-                <socket-settings id="socket-settings" class="socket-settings" .hass=${this.hass} .extData=${this.extData}></socket-settings>
-                <div class="btn_cont" id="btn_cont">
-                    <mwc-button class="back_btn" id="back_btn" @click=${this.hide_socket}>
-                        <ha-icon class="arrowLeft" id="arrowLeft" icon="mdi:arrow-left"></ha-icon>
-                    </mwc-button>
-                    <mwc-button class="save_btn" id="save_btn" label="Save" @click=${this.save}></mwc-button>
-                </div>
-            </div>
-        `;
+            `;
+        }
     }
 
     gen_presa(n) {

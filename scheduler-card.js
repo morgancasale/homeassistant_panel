@@ -137,6 +137,8 @@ class SchedulerCard extends LitElement {
         this.data.repeat = this.repeat;
 
         this.checkRepeatDaysCons();
+
+        this.data.repeat = parseInt(this.data.repeat);
       }
     } else {
       this.data.enableEndSchedule = false;
@@ -181,6 +183,7 @@ class SchedulerCard extends LitElement {
   }
 
   render() {
+    this.temp = ["A", "B", "C"]
     this.data = {
       "startSchedule" : {
         "date" : null,
@@ -191,7 +194,7 @@ class SchedulerCard extends LitElement {
         "date" : null,
         "time" : null
       },
-      "repeat" : "never"
+      "repeat" : 0
     }
 
     return html`
@@ -211,7 +214,7 @@ class SchedulerCard extends LitElement {
             </div>
             <div class="SingleEntry" id="repeat_menu">
                 <div class="description" id="repeat_label" style="padding-right:10px">Repeat :</div>
-                <md-radio class="radio" id="never_btn" name="days_num" value="never" checked="checked" @click=${this._onRadioSel}></md-radio>
+                <md-radio class="radio" id="never_btn" name="days_num" value="0" checked="checked" @click=${this._onRadioSel}></md-radio>
                 <div class="radio-label" id="repeat_label">Never</div>
                 <md-radio class="radio" name="days_num" value="1" @click=${this._onRadioSel}></md-radio>
                 <div class="radio-label" id="repeat_label">Every Day</div>
@@ -225,7 +228,7 @@ class SchedulerCard extends LitElement {
             <div class="SingleEntry" id="delete_schedule">
                 <div class="description" id="delete_label">Delete schedule :</div>
                 <ha-select id="del_sched" label="${this.mode}" @selected=${this._onScheduleSelected}>
-                  ${this.extData.map((item) => html`<mwc-list-item .value=${item}>${item}</mwc-list-item>`)}
+                  ${this.temp.map((item) => html`<mwc-list-item .value=${item}>${item}</mwc-list-item>`)}
                 </ha-select>
                 <mwc-button class="del_button" label="Delete"></mwc-button>
             </div>

@@ -34,12 +34,7 @@ class MaxPowerCard extends LitElement {
     }
 
     _onModeSelected(ev) {
-        this.data.mode = ev.target.value;
-        if(this.data.mode == "Auto"){
-            this.shadowRoot.getElementById("max_power_input_field").disabled = true;
-        } else {
-            this.shadowRoot.getElementById("max_power_input_field").disabled = false;
-        }
+        this.data.MPMode = ev.target.value;
     }
 
     sendEvent(event_name, event_msg){
@@ -57,11 +52,11 @@ class MaxPowerCard extends LitElement {
     }
 
     checkMaxPower(){
-        if(this.data.max_power == null){
+        if(this.data.maxPower == null){
             this.signalError("A value for Max Power must be entered.");
             this.shadowRoot.getElementById("max_power_input_field").invalid = true;
         } else {
-            if(parseInt(this.data.max_power) < 0){
+            if(parseInt(this.data.maxPower) < 0){
                 this.signalError("Max Power value must be positive.");
                 this.shadowRoot.getElementById("max_power_input_field").invalid = true;
             }
@@ -73,15 +68,15 @@ class MaxPowerCard extends LitElement {
     }
 
     checkMode(){
-        if(this.data.max_power != null & this.data.mode == null){
+        if(this.data.maxPower != null & this.data.MPMode == null){
             this.signalError("A mode for the Max Power control must be selected.")
         }
     }
 
     save(){
         if(this.data.MPControl & !this.data.HPMode){
-            this.data.max_power = this.shadowRoot.getElementById("max_power_input_field").value;
-            this.data.max_power = (this.data.max_power == undefined) ? null : this.data.max_power;
+            this.data.maxPower = this.shadowRoot.getElementById("max_power_input_field").value;
+            this.data.maxPower = (this.data.maxPower == undefined) ? null : this.data.maxPower;
             
             this.checkMode();
             this.checkMaxPower();
@@ -94,17 +89,17 @@ class MaxPowerCard extends LitElement {
 
     setMPControl(data){
         var btn = this.shadowRoot.getElementById("MP_button");
-        if(btn.checked != data.MP){
+        if(btn.checked != data.MPControl){
             btn.click();
         }
     }
 
     setMaxPower(data){
-        this.shadowRoot.getElementById("max_power_input_field").value = data.max_power;
+        this.shadowRoot.getElementById("max_power_input_field").value = data.maxPower;
     }
 
     setMode(data){
-        this.shadowRoot.getElementById("mode_sel").value = data.mode;
+        this.shadowRoot.getElementById("mode_sel").value = data.MPMode;
     }
 
     setData(data = this.extData){
@@ -120,8 +115,8 @@ class MaxPowerCard extends LitElement {
     render() {
         this.defaultData = {
             "MPControl" : false,
-            "max_power" : "",
-            "mode" : ""
+            "maxPower" : "",
+            "MPMode" : ""
         }
 
         this.data = this.defaultData;
@@ -158,7 +153,7 @@ class MaxPowerCard extends LitElement {
                 padding-bottom: 5px;
             }
             
-            .max_power_settings{
+            .maxPower_settings{
                 display: none;
             }
 
@@ -169,7 +164,7 @@ class MaxPowerCard extends LitElement {
                 align-content: center;
             }
 
-            .max_power_mode{
+            .maxPower_mode{
                 margin-left: auto;
             }
 
@@ -179,17 +174,17 @@ class MaxPowerCard extends LitElement {
                 align-content: center;
             }
 
-            .max_power_mode{
+            .maxPower_mode{
                 display: flex;
                 flex-wrap: wrap;
                 align-content: center;
             }
             
-            .max_power_input_field{
+            .maxPower_input_field{
                 width: 100px;
             }
 
-            .max_power_unit{
+            .maxPower_unit{
                 margin-left: 10px;
             }
         `

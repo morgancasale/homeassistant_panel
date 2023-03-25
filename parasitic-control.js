@@ -46,20 +46,9 @@ class ParasiticControl extends LitElement {
         }
     }
 
-    AutoMode() {
-        var btn = this.shadowRoot.getElementById("auto_mode_btn");
-        this.auto_mode = btn.checked;
-
-        if (this.auto_mode) {
-            this.shadowRoot.getElementById("par_ctrl_input_field").disabled = false;
-        } else {
-            this.shadowRoot.getElementById("par_ctrl_input_field").disabled = true;
-        }
-    }
-
     _onModeSelected(ev) {
-        this.data.mode = ev.target.value;
-        if(this.data.mode == "Auto"){
+        this.data.parMode = ev.target.value;
+        if(this.data.parMode == "Auto"){
             this.shadowRoot.getElementById("par_ctrl_input_field").disabled = true;
         } else {
             this.shadowRoot.getElementById("par_ctrl_input_field").disabled = false;
@@ -71,11 +60,11 @@ class ParasiticControl extends LitElement {
     }
 
     checkThreshold(){
-        if(this.data.threshold == null){
+        if(this.data.parThreshold == null){
             this.signalError("A value for the power Threshold must be entered.");
             this.shadowRoot.getElementById("par_ctrl_input_field").invalid = true;
         } else {
-            if(parseInt(this.data.threshold) < 0){
+            if(parseInt(this.data.parThreshold) < 0){
                 this.signalError("The Threshold value must be positive.");
                 this.shadowRoot.getElementById("par_ctrl_input_field").invalid = true;
             }
@@ -83,7 +72,7 @@ class ParasiticControl extends LitElement {
     }
 
     checkMode(){
-        var cond = this.data.threshold != null & this.data.mode == null;
+        var cond = this.data.parThreshold != null & this.data.parMode == null;
         cond &= (this.shadowRoot.getElementById("mode_sel_cont").style.display == "flex");
         if(cond){
             this.signalError("A mode for the Parasitic control must be selected.")
@@ -92,36 +81,36 @@ class ParasiticControl extends LitElement {
 
     save(){
         if(this.data.Par_ctrl & !this.HPMode){
-            this.data.threshold = this.shadowRoot.getElementById("par_ctrl_input_field").value;
-            this.data.threshold = (this.data.threshold == undefined) ? null : this.data.threshold;
+            this.data.parThreshold = this.shadowRoot.getElementById("par_ctrl_input_field").value;
+            this.data.parThreshold = (this.data.parThreshold == undefined) ? null : this.data.parThreshold;
 
             this.checkMode();
             this.checkThreshold();
         } else {
-            this.data.Par_ctrl = false;
+            this.data.parControl = false;
         }
 
         return this.data;
     }
 
-    setParCtrl(data){
+    setparControl(data){
         var btn = this.shadowRoot.getElementById("par_ctrl_btn");
 
-        if(btn.checked != data.parCtrl){
+        if(btn.checked != data.parControl){
             btn.click();
         }
     }
 
     setThreshold(data){
-        this.shadowRoot.getElementById("par_ctrl_input_field").value = data.threshold;
+        this.shadowRoot.getElementById("par_ctrl_input_field").value = data.parThreshold;
     }
 
     setMode(data){
-        this.shadowRoot.getElementById("mode_sel").value = data.mode;
+        this.shadowRoot.getElementById("mode_sel").value = data.parMode;
     }
 
     setData(data = this.extData){
-        this.setParCtrl(data);
+        this.setparControl(data);
         this.setThreshold(data);
         this.setMode(data);
     }
@@ -133,8 +122,8 @@ class ParasiticControl extends LitElement {
     render() {
         this.defaultData = {
             "Par_ctrl" : false,
-            "threshold" : "",
-            "mode" : ""
+            "parThreshold" : "",
+            "parMode" : ""
         };
 
         this.data = this.defaultData;
@@ -171,7 +160,7 @@ class ParasiticControl extends LitElement {
                 padding-bottom: 5px;
             }
 
-            .mode_sel_cont{
+            .parMode_sel_cont{
                 display: none;
                 flex-wrap: wrap;
                 align-content: center;

@@ -122,12 +122,12 @@ class SocketSettings extends LitElement {
     
     save(){
         this.data.socketName = this.shadowRoot.getElementById("dev_input_field").value;
-        this.data.scheduling = this.getSavedData("sched");
-        this.data.maxPower = this.getSavedData("max-pow");
-        this.data.faultCtrl = this.getSavedData("fault-ctrl");
-        this.data.parCtrl = this.getSavedData("par_ctrl");
+        this.data.scheduling = this.getSavedData("sched") 
+        this.data.maxPower = this.shadowRoot.getElementById("max-pow").save();
+        this.data.faultControl = this.shadowRoot.getElementById("fault-ctrl").save();
+        this.data.parControl = this.shadowRoot.getElementById("par_ctrl").save();
         if(this.data.HPMode){
-            this.data.applType = this.shadowRoot.getElementById("appl-type-card").save();
+            this.data.applianceType = this.shadowRoot.getElementById("appl-type-card").save();
             this.data.faultyBehCtrl = this.shadowRoot.getElementById("fault_beh").save();
         }
     }
@@ -137,10 +137,11 @@ class SocketSettings extends LitElement {
         this.SetHPMode();
         ["1", "2", "3"].map((i) =>{
             this.shadowRoot.getElementById("sched" + i).setData();
-            this.shadowRoot.getElementById("max-pow" + i).setData();
-            this.shadowRoot.getElementById("fault-ctrl" + i).setData();
-            this.shadowRoot.getElementById("par_ctrl" + i).setData();
         });
+        
+        this.shadowRoot.getElementById("max-pow").setData();
+        this.shadowRoot.getElementById("fault-ctrl").setData();
+        this.shadowRoot.getElementById("par_ctrl").setData();
         this.shadowRoot.getElementById("appl-type-card").setData();
         this.shadowRoot.getElementById("fault_beh").setData();
     }
@@ -149,47 +150,49 @@ class SocketSettings extends LitElement {
         this.setData(this.defaultData);
     }
 
-    render() {
-        var default_sched = {
-            "ON": ["ciao", "miao", "bao"],
-            "OFF": ["pizza", "pasta", "grullo", "pasto"]
-        }
-    
-        var default_maxPower = {
-            "MP" : false,
-            "max_power" : "",
-            "mode" : ""
-        }
-    
-        var default_parCtrl = {
-            "parCtrl" : false,
-            "threshold" : "",
-            "mode" : ""
-        }
-    
+    render() {    
         this.defaultData = {
-            "socketName" : null,
+            "deviceID" : null,
+            "deviceName" : null,
             "HPMode" : false,
             "scheduling" : [
-                default_sched,
-                default_sched,
-                default_sched
+                {
+                    "socketID" : 0,
+                    "startSchedule" : "DD:MM:YYYY HH:MM",
+                    "enableEndSchedule" : false,
+                    "endSchedule" : "DD:MM:YYYY HH:MM",
+                    "repeat" : 0
+                },
+                {
+                    "socketID" : 1,
+                    "startSchedule" : "DD:MM:YYYY HH:MM",
+                    "enableEndSchedule" : false,
+                    "endSchedule" : "DD:MM:YYYY HH:MM",
+                    "repeat" : 0
+                },
+                {
+                    "socketID" : 2,
+                    "startSchedule" : "DD:MM:YYYY HH:MM",
+                    "enableEndSchedule" : false,
+                    "endSchedule" : "DD:MM:YYYY HH:MM",
+                    "repeat" : 0
+                }
             ],
-            "maxPower" : [
-                default_maxPower,
-                default_maxPower,
-                default_maxPower
-            ],
-            "faultCtrl" : [false, false, false],
-            "parCtrl" : [
-                default_parCtrl,
-                default_parCtrl,
-                default_parCtrl
-            ],
-            "applType" : "None",
-            "faultyBehCtrl" : {
-                "FBC" : false,
-                "mode" : ""
+            "maxPowerControl" : {
+                "MPControl" : false,
+                "maxPower" : 0,
+                "MPMode" : "Notify"
+            },
+            "faultControl" : false,
+            "parasiticControl" : {
+                "parControl" : false,
+                "parThreshold" : 0,
+                "parMode" : "Manual"
+            },
+            "applianceType" : "None",
+            "faultyBehControl" : {
+                "FBControl" : false,
+                "FBMode" : ""
             }
         }
 
@@ -203,7 +206,7 @@ class SocketSettings extends LitElement {
                     <div class="description">Change device name:</div>
                     <div class="dev_name_input">
                         <ha-form>
-                            <ha-textfield id="dev_input_field" label=${this.extData.socket_name}>Name</ha-textfield>
+                            <ha-textfield id="dev_input_field" label=${this.extData.deviceName}>Name</ha-textfield>
                         </ha-form>
                     </div>
                 </div>
@@ -214,16 +217,17 @@ class SocketSettings extends LitElement {
                     </div>
                 </div>
 
+                <max-power-card id="max-pow" .extData=${this.outData.maxPowerControl} .HPMode=${this.data.HPMode}></max-power-card>
+                <fault-control id="fault-ctrl" .extData=${this.outData.faultControl} .HPMode=${this.data.HPMode}></fault-control>
+                <parasitic-control id="par_ctrl" .extData=${this.outData.parasiticControl} .HPMode=${this.data.HPMode}></parasitic-control> 
+
                 <div class="socket" id="socket1">
                     <div class="SingleEntry" id="socket_menu1" @click="${() => this.show_socket_stgs("1")}">
                         <socket-menu-exp id="socket_menu_exp1" style="width: 100%" .socket_pos=${"Left Socket"}></socket-menu-exp>
                     </div>
 
                     <div class="socket_stgs" id="socket_stgs1" status="hidden">
-                        <scheduling-card id="sched1" .hass=${this.hass} .extData=${this.outData.scheduling[0]} .HPMode=${this.data.HPMode}></scheduling-card>
-                        <max-power-card id="max-pow1" .extData=${this.outData.maxPower[0]} .HPMode=${this.data.HPMode}></max-power-card>
-                        <fault-control id="fault-ctrl1" .extData=${this.outData.faultCtrl[0]} .HPMode=${this.data.HPMode}></fault-control>
-                        <parasitic-control id="par_ctrl1" .extData=${this.outData.parCtrl[0]} .HPMode=${this.data.HPMode}></parasitic-control>                        
+                        <scheduling-card id="sched1" .hass=${this.hass} .extData=${this.outData.scheduling[0]} .HPMode=${this.data.HPMode}></scheduling-card>                        
                     </div>
                 </div>
 
@@ -234,11 +238,8 @@ class SocketSettings extends LitElement {
 
                     <div class="socket_stgs" id="socket_stgs2" status="hidden">
                         <scheduling-card id="sched2" .hass=${this.hass} .extData=${this.outData.scheduling[1]} .HPMode=${false}></scheduling-card>
-                        <max-power-card  id="max-pow2" .extData=${this.outData.maxPower[1]} .HPMode=${false}></max-power-card>
-                        <fault-control id="fault-ctrl2" .extData=${this.outData.faultCtrl[1]} .HPMode=${false}></fault-control>
-                        <appl-type-card id="appl-type-card" class="appl-type-card" .extData=${this.outData.applType} .socket_num=${"2"} .HPMode=${this.data.HPMode}></appl-type-card>
-                        <faulty-behaviour-card id="fault_beh" class="fault_beh" .extData=${this.outData.faultyBehCtrl}></faulty-behaviour-card>
-                        <parasitic-control id="par_ctrl2" .extData=${this.outData.parCtrl[1]} .HPMode=${false}></parasitic-control>
+                        <appl-type-card id="appl-type-card" class="appl-type-card" .extData=${this.outData.applianceType} .socket_num=${"2"} .HPMode=${this.data.HPMode}></appl-type-card>
+                        <faulty-behaviour-card id="fault_beh" class="fault_beh" .extData=${this.outData.faultyBehControl}></faulty-behaviour-card>
                     </div>
                 </div>
 
@@ -249,9 +250,6 @@ class SocketSettings extends LitElement {
 
                     <div class="socket_stgs" id="socket_stgs3" status="hidden">
                         <scheduling-card id="sched3" .hass=${this.hass} .extData=${this.outData.scheduling[2]} .HPMode=${this.data.HPMode}></scheduling-card>
-                        <max-power-card id="max-pow3" .extData=${this.outData.maxPower[2]} .HPMode=${this.data.HPMode}></max-power-card>
-                        <fault-control id="fault-ctrl3" .extData=${this.outData.faultCtrl[2]} .HPMode=${this.data.HPMode}></fault-control>
-                        <parasitic-control id="par_ctrl3" .extData=${this.outData.parCtrl[2]} .HPMode=${this.data.HPMode}></parasitic-control>                        
                     </div>
                 </div>
             </ha-card>

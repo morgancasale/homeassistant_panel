@@ -21,7 +21,7 @@ class FaultyBehaviourCard extends LitElement {
 
     FBControl() {
         var btn = this.shadowRoot.getElementById("FB_button");
-        this.data.FaultBeh = !btn.checked;
+        this.data.FBControl = !btn.checked;
         if (this.data.FaultBeh) {
             this.shadowRoot.getElementById("fault_beh_settings").style.display = "flex";
         } else {
@@ -30,7 +30,7 @@ class FaultyBehaviourCard extends LitElement {
     }
 
     _onScheduleSelected(ev) {
-        this.data.mode = ev.target.value;
+        this.data.FBMode = ev.target.value;
     }
 
     sendEvent(event_name, event_msg){
@@ -48,7 +48,7 @@ class FaultyBehaviourCard extends LitElement {
     }
 
     checkMode(){
-        if(this.data.FaultBeh & (this.data.mode == null)){
+        if(this.data.FaultBeh & (this.data.FBMode == null)){
             this.signalError("A Fault Behaviour mode must be selected.");
         }
     }
@@ -57,8 +57,8 @@ class FaultyBehaviourCard extends LitElement {
         if(!this.HPMode){
             this.checkMode();
         } else {
-            this.data.FaultBeh = false;
-            this.data.mode = null;
+            this.data.FBControl = false;
+            this.data.FBMode = null;
         }
 
         return this.data;
@@ -66,13 +66,13 @@ class FaultyBehaviourCard extends LitElement {
 
     setFBControl(data){
         var btn = this.shadowRoot.getElementById("FB_button");
-        if(btn.checked != data.FBC){
+        if(btn.checked != data.FBControl){
             btn.click();
         }
     }
 
     setMode(data){
-        this.shadowRoot.getElementById("mode_sel").value = data.mode;
+        this.shadowRoot.getElementById("mode_sel").value = data.FBMode;
     }
 
     setData(data = this.extData){
@@ -86,8 +86,8 @@ class FaultyBehaviourCard extends LitElement {
 
     render() {
         this.defaultData = {
-            "FBC" : false,
-            "mode" : ""
+            FBControl : false,
+            FBMode : ""
         };
 
         this.data = this.defaultData;
@@ -115,21 +115,21 @@ class FaultyBehaviourCard extends LitElement {
     static style = [
         generalStyles,
         css`
-        .fault_beh_settings{
-            display: none;
-        }
+            .fault_beh_settings{
+                display: none;
+            }
 
-        .button_cont{
-            margin-left: auto;
-            display: flex;
-            flex-wrap: wrap;
-            align-content: center;
-        }
+            .button_cont{
+                margin-left: auto;
+                display: flex;
+                flex-wrap: wrap;
+                align-content: center;
+            }
 
-        .fault_beh_mode{
-            display: flex;
-        }
-    `
+            .fault_beh_mode{
+                display: flex;
+            }
+        `
     ]
 
     static get styles() {
