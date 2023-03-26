@@ -103,6 +103,7 @@ class MaxPowerCard extends LitElement {
     }
 
     setData(data = this.extData){
+        this.extData = data;
         this.setMPControl(data);
         this.setMaxPower(data);
         this.setMode(data);
@@ -153,7 +154,7 @@ class MaxPowerCard extends LitElement {
                 padding-bottom: 5px;
             }
             
-            .maxPower_settings{
+            .max_power_settings{
                 display: none;
             }
 
@@ -164,7 +165,7 @@ class MaxPowerCard extends LitElement {
                 align-content: center;
             }
 
-            .maxPower_mode{
+            .max_power_mode{
                 margin-left: auto;
             }
 
@@ -174,17 +175,17 @@ class MaxPowerCard extends LitElement {
                 align-content: center;
             }
 
-            .maxPower_mode{
+            .max_power_mode{
                 display: flex;
                 flex-wrap: wrap;
                 align-content: center;
             }
             
-            .maxPower_input_field{
+            .max_power_input_field{
                 width: 100px;
             }
 
-            .maxPower_unit{
+            .max_power_unit{
                 margin-left: 10px;
             }
         `

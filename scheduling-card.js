@@ -9,10 +9,6 @@ import { generalStyles } from "./general_styles.js";
 
 import "./scheduler-card.js";
 
-//import "https://unpkg.com/@material/web@1.0.0-pre.4/index.js?module"
-
-//import "../ha-frontend/src/panels/lovelace/entity-rows/hui-input-datetime-entity-row"
-
 class SchedulingCard extends LitElement {
   static get properties() {
     return {
@@ -30,18 +26,18 @@ class SchedulingCard extends LitElement {
 
     if(state){
         this.shadowRoot.getElementById("scheduling_title").innerText = "Scheduling OFF state: ";
-        this.shadowRoot.getElementById("sch_off_card").style.display = "block";
-        this.shadowRoot.getElementById("sch_on_card").style.display = "none";
+        this.shadowRoot.getElementById("sch_OFF_card").style.display = "block";
+        this.shadowRoot.getElementById("sch_ON_card").style.display = "none";
     } else {
         this.shadowRoot.getElementById("scheduling_title").innerText = "Scheduling ON state: ";
-        this.shadowRoot.getElementById("sch_on_card").style.display = "block";
-        this.shadowRoot.getElementById("sch_off_card").style.display = "none";
+        this.shadowRoot.getElementById("sch_ON_card").style.display = "block";
+        this.shadowRoot.getElementById("sch_OFF_card").style.display = "none";
     }
   }
 
   save(){
-    this.data.offScheduling = this.shadowRoot.getElementById("sch_off_card").save();
-    this.data.onScheduling = this.shadowRoot.getElementById("sch_on_card").save();
+    this.data.offScheduling = this.shadowRoot.getElementById("sch_OFF_card").save();
+    this.data.onScheduling = this.shadowRoot.getElementById("sch_ON_card").save();
     return this.data;
   }
 
@@ -52,11 +48,18 @@ class SchedulingCard extends LitElement {
     }
   }
 
-  setData(){
+  setData(data = this.extData){
+    this.extData = data;
     this.setSchedModeOFF();
-    ["off", "on"].map((i) =>
-      this.shadowRoot.getElementById("sch_" + i + "_card").setData()
-    );
+    this.scheds = {
+      "OFF" : [],
+      "ON" : []
+    };
+
+    ["OFF", "ON"].map((mode) => {
+      var sched = (this.extData == []) ? [] : this.extData.filter(el => el["mode"] == mode);
+      this.shadowRoot.getElementById("sch_" + mode + "_card").setData(sched);
+    });
   }
 
   resetData(){
@@ -64,21 +67,14 @@ class SchedulingCard extends LitElement {
   }
 
   render() {
-    this.data = {
-      "onScheduling" : {},
-      "offScheduling" : {}
-    }
-
-    this.sel_vals = ["pizza", "pasta", "mandolino"];
-
     return html`
         <ha-card class="Scheduling">
             <div class="SingleEntry" id="sch_mode_sel">
                 <div class="description" id="scheduling_title"> Scheduling OFF state : </div>
                 <div class="sch_mode_switch"> <ha-switch id="sch_mode_switch" @click=${this.SchedulingMode}></ha-switch> </div> <!--ha-control-switch-->
             </div>
-            <scheduler-card .hass=${this.hass} id="sch_off_card" class="sch_off_card" .mode=${"OFF"} .HPMode=${this.HPMode} .extData=${this.extData.OFF}></scheduler-card>
-            <scheduler-card .hass=${this.hass} id="sch_on_card" class="sch_on_card" .mode=${"ON"} .HPMode=${this.HPMode} .extData=${this.extData.ON}></scheduler-card>
+            <scheduler-card .hass=${this.hass} id="sch_OFF_card" class="sch_OFF_card" .mode=${"OFF"} .HPMode=${this.HPMode}></scheduler-card>
+            <scheduler-card .hass=${this.hass} id="sch_ON_card" class="sch_ON_card" .mode=${"ON"} .HPMode=${this.HPMode}></scheduler-card>
         </ha-card>
     `;
   }
@@ -91,7 +87,7 @@ class SchedulingCard extends LitElement {
         margin-left: auto;
       }
 
-      .sch_on_card{
+      .sch_ON_card{
         display: none;
       }
     `

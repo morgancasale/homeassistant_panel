@@ -89,12 +89,17 @@ class SocketSettings extends LitElement {
         } else {  //HPMode OFF
             this.shadowRoot.getElementById("appl-type-card").style.display = "none";
             this.shadowRoot.getElementById("fault_beh").style.display = "none";
+
+            var par_ctrl = this.shadowRoot.getElementById("par_ctrl").shadowRoot;
+            par_ctrl.querySelector("#mode_sel_cont").style.display = "none";
+            par_ctrl.querySelector("#manual_thr").style.marginLeft = "";
+
             this.data.HPMode = false;
         }
     }
 
-    ShowApplType(socket_num){
-        var par_ctrl = this.shadowRoot.getElementById("par_ctrl" + socket_num).shadowRoot;
+    ShowApplType(){
+        var par_ctrl = this.shadowRoot.getElementById("par_ctrl").shadowRoot;
         par_ctrl.querySelector("#mode_sel_cont").style.display = "flex";
         par_ctrl.querySelector("#manual_thr").style.marginLeft = "auto";
     }
@@ -108,7 +113,7 @@ class SocketSettings extends LitElement {
         event.preventDefault();
         var socket_num = event.detail.message.socket_num;
         var ApplType = event.detail.message.type;
-        this.ShowApplType(socket_num);
+        this.ShowApplType();
         this.ShowFaultyBehaviour();
     }
 
@@ -135,15 +140,28 @@ class SocketSettings extends LitElement {
     setData(data = this.extData){
         this.outData = data;
         this.SetHPMode();
-        ["1", "2", "3"].map((i) =>{
-            this.shadowRoot.getElementById("sched" + i).setData();
+        [0, 1, 2].map((i) =>{
+            var schedData = [];
+            schedData = data["scheduling"].filter(el => el["socketID"] == i);
+            this.shadowRoot.getElementById("sched" + (i+1).toString()).setData(schedData);
         });
         
-        this.shadowRoot.getElementById("max-pow").setData();
-        this.shadowRoot.getElementById("fault-ctrl").setData();
-        this.shadowRoot.getElementById("par_ctrl").setData();
-        this.shadowRoot.getElementById("appl-type-card").setData();
-        this.shadowRoot.getElementById("fault_beh").setData();
+        this.shadowRoot.getElementById("max-pow").setData({
+            MPControl : data["MPControl"],
+            maxPower : data["maxPower"],
+            MPMode : data["MPMode"]
+        });
+        this.shadowRoot.getElementById("fault-ctrl").setData(data["faultControl"]);
+        this.shadowRoot.getElementById("par_ctrl").setData({
+            parControl : data["parControl"],
+            parThreshold : data["parThreshold"],
+            parMode : data["parMode"]
+        });
+        this.shadowRoot.getElementById("appl-type-card").setData(data["applianceType"]);
+        this.shadowRoot.getElementById("fault_beh").setData({
+            FBControl : data["FBControl"],
+            FBMode : data["FBMode"]
+        });
     }
 
     resetData(){
@@ -210,12 +228,14 @@ class SocketSettings extends LitElement {
                         </ha-form>
                     </div>
                 </div>
-                <div class="SingleEntry" id="HP_btn">
-                    <div class="description" id="HP">High Power Mode</div>
-                    <div class="button_cont">
-                        <ha-switch id="HP_button" @click="${this.HPMode}"></ha-switch>
+                <ha-card>
+                    <div class="SingleEntry" id="HP_btn">
+                        <div class="description" id="HP">High Power Mode</div>
+                        <div class="button_cont">
+                            <ha-switch id="HP_button" @click="${this.HPMode}"></ha-switch>
+                        </div>
                     </div>
-                </div>
+                </ha-card>
 
                 <max-power-card id="max-pow" .extData=${this.outData.maxPowerControl} .HPMode=${this.data.HPMode}></max-power-card>
                 <fault-control id="fault-ctrl" .extData=${this.outData.faultControl} .HPMode=${this.data.HPMode}></fault-control>

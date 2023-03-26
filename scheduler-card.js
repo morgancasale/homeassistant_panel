@@ -21,7 +21,8 @@ class SchedulerCard extends LitElement {
       panel: { type: Object },      
       mode: { type: String },
       HPMode: {type: Boolean},
-      extData: { type: Array }
+      extData: { type: Array },
+      scheds: { type: Array }
     };
   }
 
@@ -171,7 +172,18 @@ class SchedulerCard extends LitElement {
     this.shadowRoot.getElementById("del_sched").value = "";
   }
 
-  setData(){
+  async setOldSchedules(){
+    this.scheds = [];
+    for(const sched of this.extData){
+      this.scheds.push(sched["startSchedule"]+" - "+sched["endSchedule"]+" R: "+sched["repeat"]);
+    }
+    await this.render();
+    await new Promise(r => setTimeout(r, 1));
+  }
+
+  setData(data = this.extData){
+    this.extData = data;
+    this.setOldSchedules();
     this.setEndSchedOFF();
     this.resetSchedule();
     this.resetRadio();
@@ -182,21 +194,9 @@ class SchedulerCard extends LitElement {
     this.setData();
   }
 
-  render() {
-    this.temp = ["A", "B", "C"]
-    this.data = {
-      "startSchedule" : {
-        "date" : null,
-        "time" : null
-      },
-      "enableEndSchedule" : false,
-      "endSchedule" : {
-        "date" : null,
-        "time" : null
-      },
-      "repeat" : 0
-    }
+  scheds = ["temp", "temp"];
 
+  render() {
     return html`
         <div id="scheduler" class="scheduler">
             <div class="SingleEntry" id="start_time">
@@ -227,8 +227,8 @@ class SchedulerCard extends LitElement {
             </div>
             <div class="SingleEntry" id="delete_schedule">
                 <div class="description" id="delete_label">Delete schedule :</div>
-                <ha-select id="del_sched" label="${this.mode}" @selected=${this._onScheduleSelected}>
-                  ${this.temp.map((item) => html`<mwc-list-item .value=${item}>${item}</mwc-list-item>`)}
+                <ha-select id="del_sched" class="del_sched" label="${this.mode}" @selected=${this._onScheduleSelected}>
+                  ${this.scheds.map((item) => html`<mwc-list-item .value=${item}>${item}</mwc-list-item>`)}
                 </ha-select>
                 <mwc-button class="del_button" label="Delete"></mwc-button>
             </div>
@@ -276,6 +276,10 @@ class SchedulerCard extends LitElement {
       .repeat_days_input{
         width: 50px;
         padding-right: 5px;
+      }
+
+      .del_sched{
+        width: 330px;
       }
     `
   ]

@@ -49,6 +49,7 @@ class ApplianceTypeCard extends LitElement {
     }
 
     setData(data = this.extData){
+        this.extData = data;
         this.shadowRoot.getElementById("type_sel").value = data;
     }
     

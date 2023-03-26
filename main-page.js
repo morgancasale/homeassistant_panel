@@ -15,7 +15,8 @@ class MainPage extends LitElement {
             narrow: { type: Boolean },
             route: { type: Object },
             panel: { type: Object },
-            data: { type: Object }
+            data: { type: Object },
+            loadSettings: { type: Boolean }
         };
     }
     
@@ -24,71 +25,32 @@ class MainPage extends LitElement {
         this.data = {};
     }
 
-    socket_num = 100
-
-    pageTemplate = (children) => `
-        <div class="container" id="container">
-            ${unsafeHTML(children)}
-        </div>
-    `;
-
     hide_socket(){
         this.shadowRoot.getElementById("container").style.justifyContent = "";
         this.shadowRoot.getElementById("socket-settings").style.display = "none";
         this.shadowRoot.getElementById("btn_cont").style.display = "none";
 
         this.shadowRoot.getElementById("main-page").style.display = "flex";
+
+        this.loadSettings = false;
+        this.reRender();
     }
 
-    extData = {
-        "deviceID" : null,
-        "deviceName" : ["a", "b", "c"],
-        "HPMode" : false,
-        "scheduling" : [
-            {
-                "socketID" : 0,
-                "startSchedule" : "DD:MM:YYYY HH:MM",
-                "enableEndSchedule" : false,
-                "endSchedule" : "DD:MM:YYYY HH:MM",
-                "repeat" : 0
-            },
-            {
-                "socketID" : 1,
-                "startSchedule" : "DD:MM:YYYY HH:MM",
-                "enableEndSchedule" : false,
-                "endSchedule" : "DD:MM:YYYY HH:MM",
-                "repeat" : 0
-            },
-            {
-                "socketID" : 2,
-                "startSchedule" : "DD:MM:YYYY HH:MM",
-                "enableEndSchedule" : false,
-                "endSchedule" : "DD:MM:YYYY HH:MM",
-                "repeat" : 0
-            }
-        ],
-        "maxPowerControl" : {
-            "MPControl" : false,
-            "maxPower" : 0,
-            "MPMode" : "Notify"
-        },
-        "faultControl" : false,
-        "parasiticControl" : {
-            "parControl" : false,
-            "parThreshold" : 0,
-            "parMode" : "Manual"
-        },
-        "applianceType" : "None",
-        "faultyBehControl" : {
-            "FBControl" : false,
-            "FBMode" : ""
-        }
+    async reRender(){
+        await this.render();
+        await new Promise(r => setTimeout(r, 1));
     }
 
-    show_socket(socket) {
-        this.shadowRoot.getElementById("socket-settings").update();
-        this.extData.socketName = socket;
-        this.shadowRoot.getElementById("socket-settings").shadowRoot.getElementById("dev_input_field").setAttribute("label", socket)
+    getSocketData(socket_name){
+        return this.data.find(el => el["deviceName"] == socket_name);
+    }
+
+    async show_settings(socket) {
+        this.extData = this.getSocketData(socket);
+        this.loadSettings = true;
+        await this.reRender();
+
+        this.shadowRoot.getElementById("socket-settings").setData();
         this.shadowRoot.getElementById("main-page").style.display = "none";
 
         this.shadowRoot.getElementById("container").style.justifyContent = "center";
@@ -125,9 +87,6 @@ class MainPage extends LitElement {
     }
 
     save(){
-        /*prese.map((item) =>
-         0 = 0
-        );*/
         this.shadowRoot.getElementById("socket-settings").save()
     }
 
@@ -155,12 +114,14 @@ class MainPage extends LitElement {
     connectedCallback() {
         super.connectedCallback();
         this.data = false;
+        this.loadSettings = false;
         this.fetchData();
+        /*this.data = [this.extData];
+        this.sockets = [];
+        this.data.map((socket) => this.sockets.push(socket["deviceName"]));*/
     }
 
     render() {
-        //this.extData = this.getDBData();
-
         if(!this.data){
             return html`
                 <div> Loading... </div>
@@ -172,13 +133,13 @@ class MainPage extends LitElement {
                 <div class="container" id="container" @err_occ=${this.errorHandler}>
                     <div id="main-page" class="main-page" @click="${this.loadHACards}">
                         ${this.sockets.map((item) => html`<div class="child">
-                            <ha-card outlined class="socket_button" @click="${() => this.show_socket(item)}">
+                            <ha-card outlined class="socket_button" @click="${() => this.show_settings(item)}">
                                 <div name="button_text" class="button_text">${item}</div>
                             </ha-card>
                         </div>`)}
                     </div>
 
-                    <socket-settings id="socket-settings" class="socket-settings" .hass=${this.hass} .extData=${this.extData}></socket-settings>
+                    ${this.loadSettings ? html`<socket-settings id="socket-settings" class="socket-settings" .hass=${this.hass} .extData=${this.extData}></socket-settings>` : ""}
                     <div class="btn_cont" id="btn_cont">
                         <mwc-button class="back_btn" id="back_btn" @click=${this.hide_socket}>
                             <ha-icon class="arrowLeft" id="arrowLeft" icon="mdi:arrow-left"></ha-icon>
@@ -189,32 +150,6 @@ class MainPage extends LitElement {
             `;
         }
     }
-
-    gen_presa(n) {
-        var presa = html`
-            <div class="child">
-                <ha-card outlined class="socket_button" @click="${() => this.show_socket(n)}">
-                    <slot name="button_text" class="button_text">Presa ${n}</slot>
-                </ha-card>
-            </div>
-            `;
-        return presa;
-    }
-
-
-    gen_children() {
-        var children = "";
-        for (let i = 0; i < 7; i++) {
-            children += this.gen_presa(i);
-        }
-        return children;
-    }
-
-    /*update(){
-        var el = this.shadowRoot.getElementById("main-page");
-        el = el;
-    }*/
-
 
     static get styles() {
         return css`
@@ -274,4 +209,5 @@ class MainPage extends LitElement {
         `;
     }
 }
+
 customElements.define("main-page", MainPage);

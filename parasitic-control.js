@@ -110,6 +110,7 @@ class ParasiticControl extends LitElement {
     }
 
     setData(data = this.extData){
+        this.extData = data;
         this.setparControl(data);
         this.setThreshold(data);
         this.setMode(data);
@@ -160,7 +161,7 @@ class ParasiticControl extends LitElement {
                 padding-bottom: 5px;
             }
 
-            .parMode_sel_cont{
+            .mode_sel_cont{
                 display: none;
                 flex-wrap: wrap;
                 align-content: center;

@@ -76,6 +76,7 @@ class FaultyBehaviourCard extends LitElement {
     }
 
     setData(data = this.extData){
+        this.extData = data;
         this.setFBControl(data);
         this.setMode(data);
     }
