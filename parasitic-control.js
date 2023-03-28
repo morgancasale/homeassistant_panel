@@ -80,14 +80,12 @@ class ParasiticControl extends LitElement {
     }
 
     save(){
-        if(this.data.Par_ctrl & !this.HPMode){
+        if(this.data.Par_ctrl){
             this.data.parThreshold = this.shadowRoot.getElementById("par_ctrl_input_field").value;
             this.data.parThreshold = (this.data.parThreshold == undefined) ? null : this.data.parThreshold;
 
             this.checkMode();
             this.checkThreshold();
-        } else {
-            this.data.parControl = false;
         }
 
         return this.data;
@@ -109,8 +107,8 @@ class ParasiticControl extends LitElement {
         this.shadowRoot.getElementById("mode_sel").value = data.parMode;
     }
 
-    setData(data = this.extData){
-        this.extData = data;
+    setData(data){
+        this.data = data;
         this.setparControl(data);
         this.setThreshold(data);
         this.setMode(data);

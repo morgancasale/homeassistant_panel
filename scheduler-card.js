@@ -26,13 +26,24 @@ class SchedulerCard extends LitElement {
     };
   }
 
+  constructor(){
+    super();
+    this.data = {
+      socketID : null,
+      mode : "",
+      startSchedule : "",
+      enableEndSchedule : false,
+      endSchedule : "",
+      repeat : 0
+    }
+  }
+
   sel_vals = ["pizza", "pasta", "mandolino"];
   curr_val = null;
 
   En_End() {
     var state = !this.shadowRoot.getElementById("End_time_btn").checked;
     if (state) {
-      this.shadowRoot.getElementById("end-time").disabled = false;
       this.shadowRoot.getElementById("end-date").disabled = false;
       this.data.enableEndSchedule = true;
     } else {
@@ -66,18 +77,15 @@ class SchedulerCard extends LitElement {
   }
 
   getSchedule(mode){
-    var result = {
-      "date" : null,
-      "time" : null
-    };
-
     var date = this.shadowRoot.getElementById(mode + "-date").value;
-    result.date = (date != undefined) ? date : null;
+    date = (date != null) ? date : "";
 
-    var time = this.shadowRoot.getElementById(mode + "-time").value;
-    result.time = (time != undefined) ? time : null;
-
-    return result;
+    var time = "";
+    if(date != ""){
+      var time = this.shadowRoot.getElementById(mode + "-time").value;
+      time = (time != null) ? " "+time : " 00:00";
+    }
+    return date+time;
   }
 
   sendEvent(event_name, event_msg){
@@ -94,11 +102,8 @@ class SchedulerCard extends LitElement {
   }
 
   checkDateCons(){
-    var start = this.data.startSchedule.date + " " + this.data.startSchedule.time;
-    var end = this.data.endSchedule.date + " " + this.data.endSchedule.time;
-
-    start = Date.parse(start);
-    end = Date.parse(end);
+    var start = Date.parse(this.data.startSchedule);
+    var end = Date.parse(this.data.endSchedule);
     var now = Date.now();
     
     if(end < start){
@@ -107,6 +112,12 @@ class SchedulerCard extends LitElement {
 
     if((end < now) | (start < now)){
       this.signalError("Schedule date and time must be in the future.")
+    }
+
+    var repeatMs = this.repeat * 24 * 60 * 60 * 1000;
+
+    if((repeatMs != 0) & ((end-start) > (repeatMs))){
+      this.signalError("Number of days before repeating the schedule must be greater than the schedule itself.")
     }
   }
 
@@ -118,29 +129,31 @@ class SchedulerCard extends LitElement {
         this.signalError("Number of repeat days must be positive.")
         el.invalid = true;
       }
-    }
     
-    if(this.data.repeat == undefined){
-      this.signalError("Number of repeat days must not be null.")
+      if(this.data.repeat == 0){
+        this.signalError("Number of repeat days must not be null.")
+      }
     }
   }
 
   save(){
     if(!this.HPMode){
       this.data.startSchedule = this.getSchedule("start");
-      if(this.data.enableEndSchedule){
-        this.data.endSchedule = this.getSchedule("end");
-
-        this.checkDateCons();
-      }
       
-      if(this.data.startSchedule.date != null | this.data.startSchedule.time != null){
+      if(this.data.startSchedule != ""){
         this.data.repeat = this.repeat;
 
         this.checkRepeatDaysCons();
 
         this.data.repeat = parseInt(this.data.repeat);
       }
+
+      if(this.data.enableEndSchedule){
+        this.data.endSchedule = this.getSchedule("end");
+
+        this.checkDateCons();
+      }
+
     } else {
       this.data.enableEndSchedule = false;
     }
@@ -156,11 +169,10 @@ class SchedulerCard extends LitElement {
   }
 
   resetSchedule(){
-    var modes = ["start", "end"];
-    for(let i=0; i<2; i++){
-      this.shadowRoot.getElementById(modes[i] + "-date").value = null;
-      this.shadowRoot.getElementById(modes[i] + "-time").value = null;
-    }
+    ["start", "end"].map((mode) => {
+      this.shadowRoot.getElementById(mode + "-date").value = null;
+      this.shadowRoot.getElementById(mode + "-time").value = null;
+    });
   }
 
   resetRadio(){
@@ -196,43 +208,52 @@ class SchedulerCard extends LitElement {
 
   scheds = ["temp", "temp"];
 
+  EnTime(mode){
+    if(this.shadowRoot.getElementById(mode+"-date").value != null){
+      this.shadowRoot.getElementById(mode+"-time").disabled = false;
+    } else {
+      this.shadowRoot.getElementById(mode+"-time").disabled = true;
+    }
+  }
+
   render() {
     return html`
-        <div id="scheduler" class="scheduler">
-            <div class="SingleEntry" id="start_time">
-                <div class="description" id="start_time_label">Start :</div>
-                <ha-date-input class="date-input" id="start-date" .locale="${this.hass.locale}"></ha-date-input>
-                <ha-time-input id="start-time" .locale="${this.hass.locale}" .value="${this.hass.value}"></ha-time-input>
-            </div>
-            <div class="SingleEntry" id="end_time" style="padding-bottom: 7px;">
-                <div class="description" id="end_time_label" style="width: 37.5px">End :</div>
-                <ha-date-input class="date-input" id="end-date" .locale="${this.hass.locale}" disabled></ha-date-input>
-                <ha-time-input id="end-time" .locale="${this.hass.locale}" .value="${this.hass.value}" disabled></ha-time-input>
-                <div class="button_end_time_cont">
-                    <ha-switch id="End_time_btn" @click="${this.En_End}"></ha-switch>
-                </div>
-            </div>
-            <div class="SingleEntry" id="repeat_menu">
-                <div class="description" id="repeat_label" style="padding-right:10px">Repeat :</div>
-                <md-radio class="radio" id="never_btn" name="days_num" value="0" checked="checked" @click=${this._onRadioSel}></md-radio>
-                <div class="radio-label" id="repeat_label">Never</div>
-                <md-radio class="radio" name="days_num" value="1" @click=${this._onRadioSel}></md-radio>
-                <div class="radio-label" id="repeat_label">Every Day</div>
-                <md-radio class="radio" name="days_num" value="7" label="1 week" @click=${this._onRadioSel}></md-radio>
-                <div class="radio-label" id="repeat_label">Every week</div>
-                <md-radio class="radio" name="days_num" value="n" label="n days" @click=${this._onRadioSel}></md-radio>
-                <div class="radio-label" id="repeat_label">Every</div>
-                <ha-textfield id="repeat_days_input" class="repeat_days_input" label="n" @click=${this.resetValid} disabled></ha-textfield>
-                <div class="radio-label" id="repeat_label">days</div>
-            </div>
-            <div class="SingleEntry" id="delete_schedule">
-                <div class="description" id="delete_label">Delete schedule :</div>
-                <ha-select id="del_sched" class="del_sched" label="${this.mode}" @selected=${this._onScheduleSelected}>
-                  ${this.scheds.map((item) => html`<mwc-list-item .value=${item}>${item}</mwc-list-item>`)}
-                </ha-select>
-                <mwc-button class="del_button" label="Delete"></mwc-button>
-            </div>
+      <div id="scheduler" class="scheduler">
+        <div class="SingleEntry" id="start_time">
+          <div class="description" id="start_time_label">Start :</div>
+          <ha-date-input class="date-input" id="start-date" .locale="${this.hass.locale}" @change=${()=>this.EnTime("start")}></ha-date-input>
+          <ha-time-input id="start-time" .locale="${this.hass.locale}" .value="${this.hass.value}" disabled></ha-time-input>
+          <mwc-button class="button" label="Clear" @click=${()=>{this.resetSchedule(); this.setEndSchedOFF()}}></mwc-button>
         </div>
+        <div class="SingleEntry" id="end_time" style="padding-bottom: 7px;">
+          <div class="description" id="end_time_label" style="width: 37.5px">End :</div>
+          <ha-date-input class="date-input" id="end-date" .locale="${this.hass.locale}" @change=${()=>this.EnTime("end")} disabled></ha-date-input>
+          <ha-time-input id="end-time" .locale="${this.hass.locale}" .value="${this.hass.value}" disabled></ha-time-input>
+          <div class="button_end_time_cont">
+              <ha-switch id="End_time_btn" @click="${this.En_End}"></ha-switch>
+          </div>
+        </div>
+        <div class="SingleEntry" id="repeat_menu">
+          <div class="description" id="repeat_label" style="padding-right:10px">Repeat :</div>
+          <md-radio class="radio" id="never_btn" name="days_num" value="0" checked="checked" @click=${this._onRadioSel}></md-radio>
+          <div class="radio-label" id="repeat_label">Never</div>
+          <md-radio class="radio" name="days_num" value="1" @click=${this._onRadioSel}></md-radio>
+          <div class="radio-label" id="repeat_label">Every Day</div>
+          <md-radio class="radio" name="days_num" value="7" label="1 week" @click=${this._onRadioSel}></md-radio>
+          <div class="radio-label" id="repeat_label">Every week</div>
+          <md-radio class="radio" name="days_num" value="n" label="n days" @click=${this._onRadioSel}></md-radio>
+          <div class="radio-label" id="repeat_label">Every</div>
+          <ha-textfield id="repeat_days_input" class="repeat_days_input" label="n" @click=${this.resetValid} disabled></ha-textfield>
+          <div class="radio-label" id="repeat_label">days</div>
+        </div>
+        <div class="SingleEntry" id="delete_schedule">
+          <div class="description" id="delete_label">Delete schedule :</div>
+          <ha-select id="del_sched" class="del_sched" label="${this.mode}" @selected=${this._onScheduleSelected}>
+            ${this.scheds.map((item) => html`<mwc-list-item .value=${item}>${item}</mwc-list-item>`)}
+          </ha-select>
+          <mwc-button class="button" label="Delete"></mwc-button>
+        </div>
+      </div>
     `;
   }
 
@@ -246,7 +267,7 @@ class SchedulerCard extends LitElement {
         align-content: center;
       }
       
-      .del_button{
+      .button{
         display: flex;
         margin-left: 5px;
         flex-wrap: wrap;

@@ -22,7 +22,7 @@ class FaultyBehaviourCard extends LitElement {
     FBControl() {
         var btn = this.shadowRoot.getElementById("FB_button");
         this.data.FBControl = !btn.checked;
-        if (this.data.FaultBeh) {
+        if (this.data.FBControl) {
             this.shadowRoot.getElementById("fault_beh_settings").style.display = "flex";
         } else {
             this.shadowRoot.getElementById("fault_beh_settings").style.display = "none";
@@ -47,18 +47,9 @@ class FaultyBehaviourCard extends LitElement {
         this.sendEvent("err_occ", true);
     }
 
-    checkMode(){
-        if(this.data.FaultBeh & (this.data.FBMode == null)){
-            this.signalError("A Fault Behaviour mode must be selected.");
-        }
-    }
-
     save(){
-        if(!this.HPMode){
-            this.checkMode();
-        } else {
-            this.data.FBControl = false;
-            this.data.FBMode = null;
+        if(this.data.FBControl & (this.data.FBMode == null)){
+            this.signalError("A Fault Behaviour mode must be selected.");
         }
 
         return this.data;
@@ -76,7 +67,7 @@ class FaultyBehaviourCard extends LitElement {
     }
 
     setData(data = this.extData){
-        this.extData = data;
+        this.data = data;
         this.setFBControl(data);
         this.setMode(data);
     }

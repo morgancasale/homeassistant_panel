@@ -78,7 +78,7 @@ class MainPage extends LitElement {
         helpers.createRowElement({ type: "input-button-entity" });
         helpers.importMoreInfoControl("light");
 
-        this.shadowRoot.getElementById("socket-settings").setData();
+        //this.shadowRoot.getElementById("socket-settings").setData();
     }
 
     errorHandler(ev){
@@ -87,7 +87,7 @@ class MainPage extends LitElement {
     }
 
     save(){
-        this.shadowRoot.getElementById("socket-settings").save()
+        this.data = this.shadowRoot.getElementById("socket-settings").save()
     }
 
     fetchData(){ // Fetch sockets settings

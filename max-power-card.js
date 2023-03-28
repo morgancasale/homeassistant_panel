@@ -18,7 +18,6 @@ class MaxPowerCard extends LitElement {
             narrow: { type: Boolean },
             route: { type: Object },
             panel: { type: Object },
-            HPMode : { type: Boolean},
             extData: { type: Object }
         };
     }
@@ -74,14 +73,12 @@ class MaxPowerCard extends LitElement {
     }
 
     save(){
-        if(this.data.MPControl & !this.data.HPMode){
+        if(this.data.MPControl){
             this.data.maxPower = this.shadowRoot.getElementById("max_power_input_field").value;
             this.data.maxPower = (this.data.maxPower == undefined) ? null : this.data.maxPower;
             
             this.checkMode();
             this.checkMaxPower();
-        } else {
-            this.data.MPControl = false;
         }
         
         return this.data;
@@ -103,7 +100,7 @@ class MaxPowerCard extends LitElement {
     }
 
     setData(data = this.extData){
-        this.extData = data;
+        this.data = data;
         this.setMPControl(data);
         this.setMaxPower(data);
         this.setMode(data);

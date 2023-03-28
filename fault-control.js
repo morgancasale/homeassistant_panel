@@ -17,8 +17,7 @@ class FaultControl extends LitElement {
       hass: { type: Object },
       narrow: { type: Boolean },
       route: { type: Object },
-      panel: { type: Object },
-      extData: { type: Array }
+      panel: { type: Object }
     };
   }
 
@@ -28,10 +27,11 @@ class FaultControl extends LitElement {
   }
 
   save(){
-    return this.data;
+    return {faultControl : this.data};
   }
 
-  setData(data = this.extData){
+  setData(data){
+    this.data = data;
     var btn = this.shadowRoot.getElementById("fault_ctrl_btn");
     if(btn.checked != data){
       btn.click();

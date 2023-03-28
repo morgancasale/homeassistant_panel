@@ -17,7 +17,8 @@ class SchedulingCard extends LitElement {
       route: { type: Object },
       panel: { type: Object },
       HPMode: { type: Boolean },
-      extData: { type: Object }
+      extData: { type: Object },
+      socketID: { type: Number }
     };
   }
 
@@ -36,8 +37,31 @@ class SchedulingCard extends LitElement {
   }
 
   save(){
-    this.data.offScheduling = this.shadowRoot.getElementById("sch_OFF_card").save();
-    this.data.onScheduling = this.shadowRoot.getElementById("sch_ON_card").save();
+    this.data = [];
+    var offScheduling = this.shadowRoot.getElementById("sch_OFF_card").save();
+    var onScheduling = this.shadowRoot.getElementById("sch_ON_card").save();
+
+    if(offScheduling["startSchedule"] != ""){
+      this.data.push({
+        socketID : this.socketID,
+        mode : "OFF",
+        startSchedule : offScheduling["startSchedule"],
+        enableEndSchedule : offScheduling["enableEndSchedule"],
+        endSchedule : offScheduling["enableEndSchedule"] ? offScheduling["endSchedule"] : ""
+      })
+    }
+
+    if(onScheduling["startSchedule"] != ""){
+      this.data.push({
+        socketID : this.socketID,
+        mode : "ON",
+        startSchedule : onScheduling["startSchedule"],
+        enableEndSchedule : onScheduling["enableEndSchedule"],
+        endSchedule : onScheduling["enableEndSchedule"] ? onScheduling["endSchedule"] : ""
+      })
+    }
+
+
     return this.data;
   }
 

@@ -75,10 +75,11 @@ class SocketSettings extends LitElement {
         }
     }
 
-    HPMode(){
+    async HPMode(){
         var btn = this.shadowRoot.getElementById("HP_button");
-    
-        var state = !btn.checked;
+        
+        await new Promise(r => setTimeout(r, 1));
+        var state = btn.checked;
         this.HideSockets(state);
         if(state){ //HPMode ON
             this.shadowRoot.getElementById("appl-type-card").style.display = "flex";
@@ -96,6 +97,7 @@ class SocketSettings extends LitElement {
 
             this.data.HPMode = false;
         }
+        this.shadowRoot.getElementById("appl-type-card").HPMode = this.data.HPMode;
     }
 
     ShowApplType(){
@@ -126,19 +128,24 @@ class SocketSettings extends LitElement {
     }
     
     save(){
-        this.data.socketName = this.shadowRoot.getElementById("dev_input_field").value;
-        this.data.scheduling = this.getSavedData("sched") 
-        this.data.maxPower = this.shadowRoot.getElementById("max-pow").save();
-        this.data.faultControl = this.shadowRoot.getElementById("fault-ctrl").save();
-        this.data.parControl = this.shadowRoot.getElementById("par_ctrl").save();
+        var deviceName = this.shadowRoot.getElementById("dev_input_field").value;
+        this.data.deviceName = (deviceName !="") ? deviceName : this.data.deviceName;
+
+        this.data.scheduling = this.getSavedData("sched");
+        Object.assign(this.data, this.shadowRoot.getElementById("max-pow").save());
+        Object.assign(this.data, this.shadowRoot.getElementById("fault-ctrl").save());
+        Object.assign(this.data, this.shadowRoot.getElementById("par_ctrl").save());
         if(this.data.HPMode){
-            this.data.applianceType = this.shadowRoot.getElementById("appl-type-card").save();
-            this.data.faultyBehCtrl = this.shadowRoot.getElementById("fault_beh").save();
+            Object.assign(this.data, this.shadowRoot.getElementById("appl-type-card").save());
+            Object.assign(this.data, this.shadowRoot.getElementById("fault_beh").save());
         }
+
+        return this.data;
     }
 
     setData(data = this.extData){
         this.outData = data;
+        this.data = data;
         this.SetHPMode();
         [0, 1, 2].map((i) =>{
             var schedData = [];
@@ -173,45 +180,7 @@ class SocketSettings extends LitElement {
             "deviceID" : null,
             "deviceName" : null,
             "HPMode" : false,
-            "scheduling" : [
-                {
-                    "socketID" : 0,
-                    "startSchedule" : "DD:MM:YYYY HH:MM",
-                    "enableEndSchedule" : false,
-                    "endSchedule" : "DD:MM:YYYY HH:MM",
-                    "repeat" : 0
-                },
-                {
-                    "socketID" : 1,
-                    "startSchedule" : "DD:MM:YYYY HH:MM",
-                    "enableEndSchedule" : false,
-                    "endSchedule" : "DD:MM:YYYY HH:MM",
-                    "repeat" : 0
-                },
-                {
-                    "socketID" : 2,
-                    "startSchedule" : "DD:MM:YYYY HH:MM",
-                    "enableEndSchedule" : false,
-                    "endSchedule" : "DD:MM:YYYY HH:MM",
-                    "repeat" : 0
-                }
-            ],
-            "maxPowerControl" : {
-                "MPControl" : false,
-                "maxPower" : 0,
-                "MPMode" : "Notify"
-            },
-            "faultControl" : false,
-            "parasiticControl" : {
-                "parControl" : false,
-                "parThreshold" : 0,
-                "parMode" : "Manual"
-            },
-            "applianceType" : "None",
-            "faultyBehControl" : {
-                "FBControl" : false,
-                "FBMode" : ""
-            }
+            "scheduling" : []
         }
 
         this.outData = this.defaultData;
@@ -237,7 +206,7 @@ class SocketSettings extends LitElement {
                     </div>
                 </ha-card>
 
-                <max-power-card id="max-pow" .extData=${this.outData.maxPowerControl} .HPMode=${this.data.HPMode}></max-power-card>
+                <max-power-card id="max-pow" .extData=${this.outData.maxPowerControl}></max-power-card>
                 <fault-control id="fault-ctrl" .extData=${this.outData.faultControl} .HPMode=${this.data.HPMode}></fault-control>
                 <parasitic-control id="par_ctrl" .extData=${this.outData.parasiticControl} .HPMode=${this.data.HPMode}></parasitic-control> 
 
@@ -247,7 +216,7 @@ class SocketSettings extends LitElement {
                     </div>
 
                     <div class="socket_stgs" id="socket_stgs1" status="hidden">
-                        <scheduling-card id="sched1" .hass=${this.hass} .extData=${this.outData.scheduling[0]} .HPMode=${this.data.HPMode}></scheduling-card>                        
+                        <scheduling-card id="sched1" .hass=${this.hass} .socketID=${0} .HPMode=${this.data.HPMode}></scheduling-card>                        
                     </div>
                 </div>
 
@@ -257,7 +226,7 @@ class SocketSettings extends LitElement {
                     </div>
 
                     <div class="socket_stgs" id="socket_stgs2" status="hidden">
-                        <scheduling-card id="sched2" .hass=${this.hass} .extData=${this.outData.scheduling[1]} .HPMode=${false}></scheduling-card>
+                        <scheduling-card id="sched2" .hass=${this.hass} .socketID=${1} .HPMode=${false}></scheduling-card>
                         <appl-type-card id="appl-type-card" class="appl-type-card" .extData=${this.outData.applianceType} .socket_num=${"2"} .HPMode=${this.data.HPMode}></appl-type-card>
                         <faulty-behaviour-card id="fault_beh" class="fault_beh" .extData=${this.outData.faultyBehControl}></faulty-behaviour-card>
                     </div>
@@ -269,7 +238,7 @@ class SocketSettings extends LitElement {
                     </div>
 
                     <div class="socket_stgs" id="socket_stgs3" status="hidden">
-                        <scheduling-card id="sched3" .hass=${this.hass} .extData=${this.outData.scheduling[2]} .HPMode=${this.data.HPMode}></scheduling-card>
+                        <scheduling-card id="sched3" .hass=${this.hass} .socketID=${2} .HPMode=${this.data.HPMode}></scheduling-card>
                     </div>
                 </div>
             </ha-card>

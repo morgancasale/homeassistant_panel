@@ -15,8 +15,8 @@ class ApplianceTypeCard extends LitElement {
             route: { type: Object },
             panel: { type: Object },
             socket_num : { type : String },
-            HPMode : { type: Boolean },
-            extData : { type: String }
+            extData : { type: String },
+            HPMode : { type: Boolean }
         };
     }
 
@@ -30,10 +30,8 @@ class ApplianceTypeCard extends LitElement {
     }
 
     SetApplType(){
-        var data = {socket_num : this.socket_num, type : this.appl_type};
-
         if(this.type != "None"){
-            this.sendEvent("appl_type_set", data);
+            this.sendEvent("appl_type_set", this.data);
         }
     }
 
@@ -42,15 +40,15 @@ class ApplianceTypeCard extends LitElement {
     }
 
     save(){
-        if(!this.HPMode){
-            this.data = "None"
-        }
-        return this.data
+        return {applianceType : this.data}
     }
 
     setData(data = this.extData){
-        this.extData = data;
+        this.data = data;
         this.shadowRoot.getElementById("type_sel").value = data;
+        if(this.HPMode){
+            this.SetApplType();
+        }
     }
     
     resetData(){
