@@ -15,7 +15,6 @@ class ApplianceTypeCard extends LitElement {
             route: { type: Object },
             panel: { type: Object },
             socket_num : { type : String },
-            extData : { type: String },
             HPMode : { type: Boolean }
         };
     }
@@ -43,7 +42,7 @@ class ApplianceTypeCard extends LitElement {
         return {applianceType : this.data}
     }
 
-    setData(data = this.extData){
+    setData(data){
         this.data = data;
         this.shadowRoot.getElementById("type_sel").value = data;
         if(this.HPMode){

@@ -21,7 +21,6 @@ class SchedulerCard extends LitElement {
       panel: { type: Object },      
       mode: { type: String },
       HPMode: {type: Boolean},
-      extData: { type: Array },
       scheds: { type: Array }
     };
   }
@@ -83,7 +82,7 @@ class SchedulerCard extends LitElement {
     var time = "";
     if(date != ""){
       var time = this.shadowRoot.getElementById(mode + "-time").value;
-      time = (time != null) ? " "+time : " 00:00";
+      time = (time != null) ? " " + time : " 00:00";
     }
     return date+time;
   }
@@ -107,17 +106,24 @@ class SchedulerCard extends LitElement {
     var now = Date.now();
     
     if(end < start){
-      this.signalError("Schedule End date and time must be after Start one.")
+      this.shadowRoot.getElementById("end-date").invalid = true;
+      this.shadowRoot.getElementById("end-time").invalid = true;
+      throw new Error("Schedule End date and time must be after Start one.");
     }
 
     if((end < now) | (start < now)){
-      this.signalError("Schedule date and time must be in the future.")
+      this.shadowRoot.getElementById("start-date").invalid = true;
+      this.shadowRoot.getElementById("start-time").invalid = true;
+      this.shadowRoot.getElementById("end-date").invalid = true;
+      this.shadowRoot.getElementById("end-time").invalid = true;
+      throw new Error("Schedule date and time must be in the future.");
     }
 
     var repeatMs = this.repeat * 24 * 60 * 60 * 1000;
 
     if((repeatMs != 0) & ((end-start) > (repeatMs))){
-      this.signalError("Number of days before repeating the schedule must be greater than the schedule itself.")
+      this.shadowRoot.getElementById("repeat_days_input").invalid = true;
+      throw new Error("Number of days before repeating the schedule must be greater than the schedule itself.")
     }
   }
 
@@ -126,12 +132,13 @@ class SchedulerCard extends LitElement {
       var el = this.shadowRoot.getElementById("repeat_days_input");
       this.data.repeat = el.value;
       if(parseInt(this.data.repeat) < 0){
-        this.signalError("Number of repeat days must be positive.")
         el.invalid = true;
+        throw new Error("Number of repeat days must be positive.")
       }
     
       if(this.data.repeat == 0){
-        this.signalError("Number of repeat days must not be null.")
+        el.invalid = true;
+        throw new Error("Number of repeat days must not be null.")
       }
     }
   }
@@ -184,18 +191,21 @@ class SchedulerCard extends LitElement {
     this.shadowRoot.getElementById("del_sched").value = "";
   }
 
-  async setOldSchedules(){
-    this.scheds = [];
-    for(const sched of this.extData){
-      this.scheds.push(sched["startSchedule"]+" - "+sched["endSchedule"]+" R: "+sched["repeat"]);
-    }
+  async reRender(){    
+    await new Promise(r => setTimeout(r, 5));
     await this.render();
-    await new Promise(r => setTimeout(r, 1));
   }
 
-  setData(data = this.extData){
-    this.extData = data;
-    this.setOldSchedules();
+  async setOldSchedules(data){
+    this.scheds = [];
+    for(const sched of data){
+      this.scheds.push(sched["startSchedule"]+" - "+sched["endSchedule"]+" R: "+sched["repeat"]);
+    }
+    await this.reRender();
+  }
+
+  setData(data){
+    this.setOldSchedules(data);
     this.setEndSchedOFF();
     this.resetSchedule();
     this.resetRadio();
@@ -214,6 +224,10 @@ class SchedulerCard extends LitElement {
     } else {
       this.shadowRoot.getElementById(mode+"-time").disabled = true;
     }
+  }
+
+  delSchedule(){
+    var selSched = this.shadowRoot.getElementById("del_sched").value;
   }
 
   render() {
@@ -251,7 +265,10 @@ class SchedulerCard extends LitElement {
           <ha-select id="del_sched" class="del_sched" label="${this.mode}" @selected=${this._onScheduleSelected}>
             ${this.scheds.map((item) => html`<mwc-list-item .value=${item}>${item}</mwc-list-item>`)}
           </ha-select>
-          <mwc-button class="button" label="Delete"></mwc-button>
+          <mwc-button class="button" @click=${this.delSchedule}>
+            <ha-icon class="okTick" id="okTick" icon="mdi:check"></ha-icon>
+            <div id="save_btn_text">Delete</div>
+          </mwc-button>
         </div>
       </div>
     `;
@@ -301,6 +318,10 @@ class SchedulerCard extends LitElement {
 
       .del_sched{
         width: 330px;
+      }
+      .okTick{
+        display: none;
+        padding-right: 5px;
       }
     `
   ]

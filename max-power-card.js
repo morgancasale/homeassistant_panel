@@ -17,9 +17,13 @@ class MaxPowerCard extends LitElement {
             hass: { type: Object },
             narrow: { type: Boolean },
             route: { type: Object },
-            panel: { type: Object },
-            extData: { type: Object }
+            panel: { type: Object }
         };
+    }
+
+    constructor(){
+        super();
+        this.errState = false;
     }
 
     MPControl() {
@@ -47,35 +51,43 @@ class MaxPowerCard extends LitElement {
 
     signalError(msg){
         alert(msg);
-        this.sendEvent("err_occ", true);
+        this.errState = true;        
+        this.sendEvent("err_occ", this.errState);
     }
 
     checkMaxPower(){
-        if(this.data.maxPower == null){
-            this.signalError("A value for Max Power must be entered.");
+        if(this.data.maxPower == null | isNaN(this.data.maxPower)){
             this.shadowRoot.getElementById("max_power_input_field").invalid = true;
+            throw new Error("A numeric value for Max Power must be entered.");
         } else {
             if(parseInt(this.data.maxPower) < 0){
-                this.signalError("Max Power value must be positive.");
                 this.shadowRoot.getElementById("max_power_input_field").invalid = true;
+                throw new Error("Max Power value must be positive.");
             }
         }
     }
 
+    resetErr(){
+        this.errState = false;
+        this.sendEvent("err_occ", this.errState);
+    }
+
     resetValid(){
         this.shadowRoot.getElementById("max_power_input_field").invalid = false;
+        this.resetErr();        
     }
 
     checkMode(){
         if(this.data.maxPower != null & this.data.MPMode == null){
-            this.signalError("A mode for the Max Power control must be selected.")
+            throw new Error("A mode for the Max Power control must be selected.")
+        } else {
+            this.resetErr();
         }
     }
 
     save(){
         if(this.data.MPControl){
-            this.data.maxPower = this.shadowRoot.getElementById("max_power_input_field").value;
-            this.data.maxPower = (this.data.maxPower == undefined) ? null : this.data.maxPower;
+            this.data.maxPower = parseFloat(this.shadowRoot.getElementById("max_power_input_field").value);
             
             this.checkMode();
             this.checkMaxPower();
@@ -99,7 +111,7 @@ class MaxPowerCard extends LitElement {
         this.shadowRoot.getElementById("mode_sel").value = data.MPMode;
     }
 
-    setData(data = this.extData){
+    setData(data){
         this.data = data;
         this.setMPControl(data);
         this.setMaxPower(data);

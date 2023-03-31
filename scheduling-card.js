@@ -17,7 +17,6 @@ class SchedulingCard extends LitElement {
       route: { type: Object },
       panel: { type: Object },
       HPMode: { type: Boolean },
-      extData: { type: Object },
       socketID: { type: Number }
     };
   }
@@ -38,31 +37,37 @@ class SchedulingCard extends LitElement {
 
   save(){
     this.data = [];
-    var offScheduling = this.shadowRoot.getElementById("sch_OFF_card").save();
-    var onScheduling = this.shadowRoot.getElementById("sch_ON_card").save();
 
-    if(offScheduling["startSchedule"] != ""){
-      this.data.push({
-        socketID : this.socketID,
-        mode : "OFF",
-        startSchedule : offScheduling["startSchedule"],
-        enableEndSchedule : offScheduling["enableEndSchedule"],
-        endSchedule : offScheduling["enableEndSchedule"] ? offScheduling["endSchedule"] : ""
-      })
+    try{
+      var offScheduling = this.shadowRoot.getElementById("sch_OFF_card").save();
+      var onScheduling = this.shadowRoot.getElementById("sch_ON_card").save();
+
+      if(offScheduling["startSchedule"] != ""){
+        this.data.push({
+          socketID : this.socketID,
+          mode : "OFF",
+          startSchedule : offScheduling["startSchedule"],
+          enableEndSchedule : offScheduling["enableEndSchedule"],
+          endSchedule : offScheduling["enableEndSchedule"] ? offScheduling["endSchedule"] : ""
+        })
+      }
+
+      if(onScheduling["startSchedule"] != ""){
+        this.data.push({
+          socketID : this.socketID,
+          mode : "ON",
+          startSchedule : onScheduling["startSchedule"],
+          enableEndSchedule : onScheduling["enableEndSchedule"],
+          endSchedule : onScheduling["enableEndSchedule"] ? onScheduling["endSchedule"] : ""
+        })
+      }
+
+      this.data = (this.data.length != 0) ? this.data : null;
+
+      return this.data;
+    } catch(e) {
+      throw new Error("An error occured while saving schedules: \n\t" + e.message);
     }
-
-    if(onScheduling["startSchedule"] != ""){
-      this.data.push({
-        socketID : this.socketID,
-        mode : "ON",
-        startSchedule : onScheduling["startSchedule"],
-        enableEndSchedule : onScheduling["enableEndSchedule"],
-        endSchedule : onScheduling["enableEndSchedule"] ? onScheduling["endSchedule"] : ""
-      })
-    }
-
-
-    return this.data;
   }
 
   setSchedModeOFF(){
@@ -72,8 +77,7 @@ class SchedulingCard extends LitElement {
     }
   }
 
-  setData(data = this.extData){
-    this.extData = data;
+  setData(data){
     this.setSchedModeOFF();
     this.scheds = {
       "OFF" : [],
@@ -81,7 +85,7 @@ class SchedulingCard extends LitElement {
     };
 
     ["OFF", "ON"].map((mode) => {
-      var sched = (this.extData == []) ? [] : this.extData.filter(el => el["mode"] == mode);
+      var sched = (data == []) ? [] : data.filter(el => el["mode"] == mode);
       this.shadowRoot.getElementById("sch_" + mode + "_card").setData(sched);
     });
   }

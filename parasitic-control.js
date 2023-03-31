@@ -22,6 +22,11 @@ class ParasiticControl extends LitElement {
         };
     }
 
+    constructor(){
+        super();
+        this.errState = false;
+    }
+
     sendEvent(event_name, event_msg){
         let Event = new CustomEvent(event_name, {
             detail: { message: event_msg },
@@ -33,12 +38,18 @@ class ParasiticControl extends LitElement {
 
     signalError(msg){
         alert(msg);
-        this.sendEvent("err_occ", true);
+        this.errState = true;
+        this.sendEvent("err_occ", this.errState);
+    }
+
+    resetErr(){
+        this.errState = false;
+        this.sendEvent("err_occ", this.errState);
     }
 
     ParControl() {
         var state = this.shadowRoot.getElementById("par_ctrl_btn").shadowRoot.getElementById("basic-switch").getAttribute("aria-checked");
-        this.data.Par_ctrl = (state == "false");
+        this.data.parControl = (state == "false");
         if (state == "false") {
             this.shadowRoot.getElementById("par_ctrl_settings").style.display = "flex";
         } else {
@@ -57,16 +68,17 @@ class ParasiticControl extends LitElement {
 
     resetValid(){
         this.shadowRoot.getElementById("par_ctrl_input_field").invalid = false;
+        this.resetErr();
     }
 
     checkThreshold(){
-        if(this.data.parThreshold == null){
-            this.signalError("A value for the power Threshold must be entered.");
+        if(this.data.parThreshold == null | isNaN(this.data.parThreshold)){
             this.shadowRoot.getElementById("par_ctrl_input_field").invalid = true;
+            throw new Error("A value for the power Threshold must be entered.");
         } else {
-            if(parseInt(this.data.parThreshold) < 0){
-                this.signalError("The Threshold value must be positive.");
+            if(parseInt(this.data.parThreshold) < 0){                
                 this.shadowRoot.getElementById("par_ctrl_input_field").invalid = true;
+                throw new Error("The Threshold value must be positive.");
             }
         }
     }
@@ -75,14 +87,15 @@ class ParasiticControl extends LitElement {
         var cond = this.data.parThreshold != null & this.data.parMode == null;
         cond &= (this.shadowRoot.getElementById("mode_sel_cont").style.display == "flex");
         if(cond){
-            this.signalError("A mode for the Parasitic control must be selected.")
+            throw new Error("A mode for the Parasitic control must be selected.")
+        } else {
+            this.resetErr();
         }
     }
 
     save(){
-        if(this.data.Par_ctrl){
-            this.data.parThreshold = this.shadowRoot.getElementById("par_ctrl_input_field").value;
-            this.data.parThreshold = (this.data.parThreshold == undefined) ? null : this.data.parThreshold;
+        if(this.data.parControl){
+            this.data.parThreshold = parseFloat(this.shadowRoot.getElementById("par_ctrl_input_field").value);
 
             this.checkMode();
             this.checkThreshold();
@@ -120,7 +133,7 @@ class ParasiticControl extends LitElement {
 
     render() {
         this.defaultData = {
-            "Par_ctrl" : false,
+            "parControl" : false,
             "parThreshold" : "",
             "parMode" : ""
         };

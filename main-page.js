@@ -5,6 +5,7 @@ import {
 } from "https://cdn.skypack.dev/lit-element@2.4.0/lit-element.js";
 
 //import { unsafeHTML } from 'https://cdn.skypack.dev/lit@2.4.0/directives/unsafe-html.js';
+import "https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js";
 
 import "./socket-settings.js";
 
@@ -23,9 +24,11 @@ class MainPage extends LitElement {
     constructor(){
         super();
         this.data = {};
+        this.errState = false;
     }
 
     hide_socket(){
+        this.fetchData();
         this.shadowRoot.getElementById("container").style.justifyContent = "";
         this.shadowRoot.getElementById("socket-settings").style.display = "none";
         this.shadowRoot.getElementById("btn_cont").style.display = "none";
@@ -46,11 +49,12 @@ class MainPage extends LitElement {
     }
 
     async show_settings(socket) {
-        this.extData = this.getSocketData(socket);
+        this.socketData = this.getSocketData(socket);
+        this.extData = this.socketData;
         this.loadSettings = true;
         await this.reRender();
 
-        this.shadowRoot.getElementById("socket-settings").setData();
+        this.shadowRoot.getElementById("socket-settings").setData(this.socketData);
         this.shadowRoot.getElementById("main-page").style.display = "none";
 
         this.shadowRoot.getElementById("container").style.justifyContent = "center";
@@ -83,11 +87,57 @@ class MainPage extends LitElement {
 
     errorHandler(ev){
         ev.preventDefault();
-        this.error = ev.detail.message;
+        this.errState = ev.detail.message;
+    }
+
+    SavedState(success){
+        if(success){
+            this.shadowRoot.getElementById("okTick").style.display = "block";
+            this.shadowRoot.getElementById("save_btn_text").innerText = "Saved";
+        } else {
+            var tick = this.shadowRoot.getElementById("okTick");
+            tick.style.display = "block";
+            tick.icon = "mdi:window-close";
+            tick.style.color = "red";
+
+            var text = this.shadowRoot.getElementById("save_btn_text");
+            text.style.color = "red";
+            text.innerText = "Error";
+        }
     }
 
     save(){
-        this.data = this.shadowRoot.getElementById("socket-settings").save()
+        try{
+            this.socketData = this.shadowRoot.getElementById("socket-settings").save();
+            this.socketData.deviceID = this.extData.deviceID;
+            this.socketData.deviceName = (this.socketData.deviceName != this.extData.deviceName) ? 
+                                this.socketData.deviceName : this.extData.deviceName;
+
+            var url = "http://192.168.2.145:8099/setDeviceSettings";
+            var request = {
+                method: "PUT", // *GET, POST, PUT, DELETE, etc.
+                mode: "cors", // no-cors, *cors, same-origin
+                cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+                credentials: "same-origin", // include, *same-origin, omit
+                headers: {
+                "Content-Type": "application/json",
+                // 'Content-Type': 'application/x-www-form-urlencoded',
+                }, // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+                body: JSON.stringify([this.socketData])// body data type must match "Content-Type" header
+            };
+            
+            if(!this.errState){
+                fetch(url, request)
+                .then((response) => {
+                    this.SavedState(response.ok);
+                })
+                .catch(error => {
+                    throw new Error("An error occured while performing PUT: \n\t" + error.message);
+                });
+            }
+        } catch(e){
+            alert("Error in the main page: \n\t" + e.message);
+        }
     }
 
     fetchData(){ // Fetch sockets settings
@@ -116,9 +166,6 @@ class MainPage extends LitElement {
         this.data = false;
         this.loadSettings = false;
         this.fetchData();
-        /*this.data = [this.extData];
-        this.sockets = [];
-        this.data.map((socket) => this.sockets.push(socket["deviceName"]));*/
     }
 
     render() {
@@ -130,7 +177,9 @@ class MainPage extends LitElement {
             this.setMobileTheme();
             return html`
                 <app-header fixed="" slot="header"> </app-header>
+                
                 <div class="container" id="container" @err_occ=${this.errorHandler}>
+                    
                     <div id="main-page" class="main-page" @click="${this.loadHACards}">
                         ${this.sockets.map((item) => html`<div class="child">
                             <ha-card outlined class="socket_button" @click="${() => this.show_settings(item)}">
@@ -144,7 +193,10 @@ class MainPage extends LitElement {
                         <mwc-button class="back_btn" id="back_btn" @click=${this.hide_socket}>
                             <ha-icon class="arrowLeft" id="arrowLeft" icon="mdi:arrow-left"></ha-icon>
                         </mwc-button>
-                        <mwc-button class="save_btn" id="save_btn" label="Save" @click=${this.save}></mwc-button>
+                        <mwc-button class="save_btn" id="save_btn" @click=${this.save}>
+                            <ha-icon class="okTick" id="okTick" icon="mdi:check"></ha-icon>
+                            <div id="save_btn_text">Save</div>
+                        </mwc-button>
                     </div>
                 </div>
             `;
@@ -206,6 +258,10 @@ class MainPage extends LitElement {
                 margin-left: auto;
             }
 
+            .okTick{
+                display: none;
+                padding-right: 5px;
+            }
         `;
     }
 }

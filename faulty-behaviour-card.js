@@ -14,8 +14,7 @@ class FaultyBehaviourCard extends LitElement {
             narrow: { type: Boolean },
             route: { type: Object },
             panel: { type: Object },
-            HPMode: { type: Boolean },
-            extData: { type: Object }
+            HPMode: { type: Boolean }
         };
     }
 
@@ -49,7 +48,7 @@ class FaultyBehaviourCard extends LitElement {
 
     save(){
         if(this.data.FBControl & (this.data.FBMode == null)){
-            this.signalError("A Fault Behaviour mode must be selected.");
+            throw new Error("A Fault Behaviour mode must be selected.");
         }
 
         return this.data;
@@ -66,7 +65,7 @@ class FaultyBehaviourCard extends LitElement {
         this.shadowRoot.getElementById("mode_sel").value = data.FBMode;
     }
 
-    setData(data = this.extData){
+    setData(data){
         this.data = data;
         this.setFBControl(data);
         this.setMode(data);

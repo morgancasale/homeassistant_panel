@@ -66,11 +66,11 @@ class SocketSettings extends LitElement {
         }
     }
 
-    SetHPMode(){
+    SetHPMode(data){
         var btn = this.shadowRoot.getElementById("HP_button");
         var btn_state = btn.checked;
 
-        if(btn_state != this.extData.HPMode){
+        if(btn_state != data.HPMode){
             btn.click();
         }
     }
@@ -128,46 +128,60 @@ class SocketSettings extends LitElement {
     }
     
     save(){
-        var deviceName = this.shadowRoot.getElementById("dev_input_field").value;
-        this.data.deviceName = (deviceName !="") ? deviceName : this.data.deviceName;
+        try{
+            var deviceName = this.shadowRoot.getElementById("dev_input_field").value;
+            this.outData.deviceName = (deviceName !="") ? deviceName : this.outData.deviceName;
+            
+            var sched_data = this.getSavedData("sched");
 
-        this.data.scheduling = this.getSavedData("sched");
-        Object.assign(this.data, this.shadowRoot.getElementById("max-pow").save());
-        Object.assign(this.data, this.shadowRoot.getElementById("fault-ctrl").save());
-        Object.assign(this.data, this.shadowRoot.getElementById("par_ctrl").save());
-        if(this.data.HPMode){
-            Object.assign(this.data, this.shadowRoot.getElementById("appl-type-card").save());
-            Object.assign(this.data, this.shadowRoot.getElementById("fault_beh").save());
+            if(JSON.stringify(sched_data) === JSON.stringify([null, null, null])){
+                this.outData.scheduling = null;
+            } else {
+                this.outData.scheduling = sched_data;            
+            }
+            
+            Object.assign(this.outData, {"applianceType" : "None"});
+            Object.assign(this.outData, {"FBControl" : false, "FBMode" : "Notify"});
+
+            Object.assign(this.outData, this.shadowRoot.getElementById("max-pow").save());
+            Object.assign(this.outData, this.shadowRoot.getElementById("fault-ctrl").save());
+            Object.assign(this.outData, this.shadowRoot.getElementById("par_ctrl").save());
+            if(this.outData.HPMode){
+                Object.assign(this.outData, this.shadowRoot.getElementById("appl-type-card").save());
+                Object.assign(this.outData, this.shadowRoot.getElementById("fault_beh").save());
+            }
+
+            return this.outData;
+        } catch(e){
+            throw new Error("An error occurred while saving some settings: \n\t" + e.message);
         }
-
-        return this.data;
     }
 
-    setData(data = this.extData){
-        this.outData = data;
+    setData(data){
+        this.outData = Object.assign({}, data);
         this.data = data;
-        this.SetHPMode();
+        this.SetHPMode(data);
         [0, 1, 2].map((i) =>{
             var schedData = [];
-            schedData = data["scheduling"].filter(el => el["socketID"] == i);
+            schedData = this.data["scheduling"].filter(el => el["socketID"] == i);
             this.shadowRoot.getElementById("sched" + (i+1).toString()).setData(schedData);
         });
         
         this.shadowRoot.getElementById("max-pow").setData({
-            MPControl : data["MPControl"],
-            maxPower : data["maxPower"],
-            MPMode : data["MPMode"]
+            MPControl : this.data["MPControl"],
+            maxPower : this.data["maxPower"],
+            MPMode : this.data["MPMode"]
         });
-        this.shadowRoot.getElementById("fault-ctrl").setData(data["faultControl"]);
+        this.shadowRoot.getElementById("fault-ctrl").setData(this.data["faultControl"]);
         this.shadowRoot.getElementById("par_ctrl").setData({
-            parControl : data["parControl"],
-            parThreshold : data["parThreshold"],
-            parMode : data["parMode"]
+            parControl : this.data["parControl"],
+            parThreshold : this.data["parThreshold"],
+            parMode : this.data["parMode"]
         });
-        this.shadowRoot.getElementById("appl-type-card").setData(data["applianceType"]);
+        this.shadowRoot.getElementById("appl-type-card").setData(this.data["applianceType"]);
         this.shadowRoot.getElementById("fault_beh").setData({
-            FBControl : data["FBControl"],
-            FBMode : data["FBMode"]
+            FBControl : this.data["FBControl"],
+            FBMode : this.data["FBMode"]
         });
     }
 
@@ -206,9 +220,9 @@ class SocketSettings extends LitElement {
                     </div>
                 </ha-card>
 
-                <max-power-card id="max-pow" .extData=${this.outData.maxPowerControl}></max-power-card>
-                <fault-control id="fault-ctrl" .extData=${this.outData.faultControl} .HPMode=${this.data.HPMode}></fault-control>
-                <parasitic-control id="par_ctrl" .extData=${this.outData.parasiticControl} .HPMode=${this.data.HPMode}></parasitic-control> 
+                <max-power-card id="max-pow" ></max-power-card>
+                <fault-control id="fault-ctrl"  .HPMode=${this.data.HPMode}></fault-control>
+                <parasitic-control id="par_ctrl"  .HPMode=${this.data.HPMode}></parasitic-control> 
 
                 <div class="socket" id="socket1">
                     <div class="SingleEntry" id="socket_menu1" @click="${() => this.show_socket_stgs("1")}">
@@ -227,8 +241,8 @@ class SocketSettings extends LitElement {
 
                     <div class="socket_stgs" id="socket_stgs2" status="hidden">
                         <scheduling-card id="sched2" .hass=${this.hass} .socketID=${1} .HPMode=${false}></scheduling-card>
-                        <appl-type-card id="appl-type-card" class="appl-type-card" .extData=${this.outData.applianceType} .socket_num=${"2"} .HPMode=${this.data.HPMode}></appl-type-card>
-                        <faulty-behaviour-card id="fault_beh" class="fault_beh" .extData=${this.outData.faultyBehControl}></faulty-behaviour-card>
+                        <appl-type-card id="appl-type-card" class="appl-type-card" .socket_num=${"2"} .HPMode=${this.data.HPMode}></appl-type-card>
+                        <faulty-behaviour-card id="fault_beh" class="fault_beh" ></faulty-behaviour-card>
                     </div>
                 </div>
 
