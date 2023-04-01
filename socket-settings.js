@@ -86,7 +86,7 @@ class SocketSettings extends LitElement {
             if(this.FaultBehActive){
                 this.shadowRoot.getElementById("fault_beh").style.display = "flex";
             }
-            this.data.HPMode = true;
+            this.outData.HPMode = true;
         } else {  //HPMode OFF
             this.shadowRoot.getElementById("appl-type-card").style.display = "none";
             this.shadowRoot.getElementById("fault_beh").style.display = "none";
@@ -95,9 +95,9 @@ class SocketSettings extends LitElement {
             par_ctrl.querySelector("#mode_sel_cont").style.display = "none";
             par_ctrl.querySelector("#manual_thr").style.marginLeft = "";
 
-            this.data.HPMode = false;
+            this.outData.HPMode = false;
         }
-        this.shadowRoot.getElementById("appl-type-card").HPMode = this.data.HPMode;
+        this.shadowRoot.getElementById("appl-type-card").HPMode = this.outData.HPMode;
     }
 
     ShowApplType(){
@@ -113,8 +113,6 @@ class SocketSettings extends LitElement {
 
     ApplSetHandler(event){
         event.preventDefault();
-        var socket_num = event.detail.message.socket_num;
-        var ApplType = event.detail.message.type;
         this.ShowApplType();
         this.ShowFaultyBehaviour();
     }
@@ -147,7 +145,7 @@ class SocketSettings extends LitElement {
 
             
             var offSocket_data = this.getSavedData("socket_menu_exp");
-            Object.assign(this.outData, {enabledSockets : offSocket_data});
+            Object.assign(this.outData, { enabledSockets : offSocket_data });
             
             Object.assign(this.outData, {"applianceType" : "None"});
             Object.assign(this.outData, {"FBControl" : false, "FBMode" : "Notify"});

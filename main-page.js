@@ -140,8 +140,9 @@ class MainPage extends LitElement {
         try{
             this.socketData = this.shadowRoot.getElementById("socket-settings").save();
             this.socketData.deviceID = this.extData.deviceID;
-            this.socketData.deviceName = (this.socketData.deviceName != this.extData.deviceName) ? 
-                                this.socketData.deviceName : this.extData.deviceName;
+
+            var cond = (this.socketData.deviceName != this.extData.deviceName) | (this.socketData.deviceName == null);
+            this.socketData.deviceName = (cond) ? this.socketData.deviceName : this.extData.deviceName;
 
             var url = "http://192.168.2.145:8099/setDeviceSettings";
             var request = {

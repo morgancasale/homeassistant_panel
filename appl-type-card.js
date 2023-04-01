@@ -14,9 +14,15 @@ class ApplianceTypeCard extends LitElement {
             narrow: { type: Boolean },
             route: { type: Object },
             panel: { type: Object },
-            socket_num : { type : String },
-            HPMode : { type: Boolean }
+            socket_num: { type : String },
+            HPMode: { type: Boolean },
+            appliances: { type: Array }
         };
+    }
+    
+    constructor(){
+        super();
+        this.appliances = ["None", "Oven", "Microwave", "Fridge", "Washing Machine", "Dryer"];
     }
 
     sendEvent(event_name, event_msg){
@@ -29,7 +35,8 @@ class ApplianceTypeCard extends LitElement {
     }
 
     SetApplType(){
-        if(this.type != "None"){
+        this.data = this.shadowRoot.getElementById("type_sel").value;
+        if(this.data != "None"){
             this.sendEvent("appl_type_set", this.data);
         }
     }
@@ -48,15 +55,36 @@ class ApplianceTypeCard extends LitElement {
         if(this.HPMode){
             this.SetApplType();
         }
+        this.getAppliances();
     }
     
     resetData(){
         this.setData("None");
     }
 
-    render() {
-        const appliances = ["None", "Oven", "Microwave", "Fridge", "Washing Machine", "Dryer"];
+    async getAppliances(){
+        var url = "http://192.168.2.145:8099/getInfo?";
+        var params = {
+            table : "AppliancesInfo",
+            keyName : "applianceType",
+            keyValue : "*"
+        };
+        params = new URLSearchParams(params);
 
+        fetch(url + params)
+        .then((response) => response.json())
+        .then((data) => {
+            this.data = data;
+            this.appliances = [];
+            this.data.map((appl) => this.appliances.push(appl[0].applianceType));
+        })
+        .catch(error => {
+            console.error(error); // if there's an error, it will be logged to the console
+        });
+        await this.requestUpdate();
+    }
+
+    render() {
         this.data = "None"
 
         return html`
@@ -64,7 +92,7 @@ class ApplianceTypeCard extends LitElement {
                 <div class="SingleEntry">
                     <div class="description" id="descr"> Appliance Type : </div>
                     <ha-select class="type_sel" id="type_sel" label="Choose type" @selected=${this._onScheduleSelected}>+
-                        ${appliances.map((item) => html`<mwc-list-item .value=${item}>${item}</mwc-list-item>`)}
+                        ${this.appliances.map((item) => html`<mwc-list-item .value=${item}>${item}</mwc-list-item>`)}
                     </ha-select>
                     <mwc-button class="type_btn" label="Set" @click="${this.SetApplType}"></mwc-button>
                 </div>
