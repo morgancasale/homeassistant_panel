@@ -137,7 +137,7 @@ class SocketMenuExp extends LitElement {
             }
             
             .arrow{
-                color: white;
+                color: var(--primary-text-color);
                 font-size: 30px;
             }
 
