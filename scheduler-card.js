@@ -191,17 +191,18 @@ class SchedulerCard extends LitElement {
     this.shadowRoot.getElementById("del_sched").value = "";
   }
 
-  async reRender(){    
-    await new Promise(r => setTimeout(r, 5));
-    await this.render();
-  }
-
   async setOldSchedules(data){
     this.scheds = [];
     for(const sched of data){
-      this.scheds.push(sched["startSchedule"]+" - "+sched["endSchedule"]+" R: "+sched["repeat"]);
+      var nsched = {
+        txt : "",
+        data : {}
+      }
+      Object.assign(nsched.data, sched);
+      nsched.txt = sched["startSchedule"]+" - "+sched["endSchedule"]+" R: "+sched["repeat"];
+      this.scheds.push(nsched);
     }
-    await this.reRender();
+    await this.requestUpdate();
   }
 
   setData(data){
@@ -226,8 +227,76 @@ class SchedulerCard extends LitElement {
     }
   }
 
+  parseUnixTime(datetime){
+    datetime = datetime.split(" ");
+    var date = datetime[0].split("/");
+    var time = datetime[1].split(":");
+    return Math.floor(new Date(date[2], date[1]-1, date[0], time[0], time[1]).getTime() / 1000);
+  }
+
+  delState(success){
+    if(success){
+      var tick = this.shadowRoot.getElementById("okTick");
+      tick.style.display = "block";
+      tick.icon = "mdi:check";
+      tick.style.color = "";
+      
+      var text = this.shadowRoot.getElementById("save_btn_text");
+      text.innerText = "Deleted";
+      text.style.color = "";
+    } else {
+      var tick = this.shadowRoot.getElementById("okTick");
+      tick.style.display = "block";
+      tick.icon = "mdi:window-close";
+      tick.style.color = "red";
+
+      var text = this.shadowRoot.getElementById("save_btn_text");
+      text.style.color = "red";
+      text.innerText = "Error";
+    }
+  }
+
+  delRequest(sched){
+    var url = "http://192.168.2.145:8099/delDevSchedule";
+    var request = {
+      method: "DELETE", // *GET, POST, PUT, DELETE, etc.
+      mode: "cors", // no-cors, *cors, same-origin
+      cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+      credentials: "same-origin", // include, *same-origin, omit
+      headers: {
+        "Content-Type": "application/json",
+        // 'Content-Type': 'application/x-www-form-urlencoded',
+      }, // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+      body: JSON.stringify([sched])// body data type must match "Content-Type" header
+    };
+    
+    if(!this.errState){
+      fetch(url, request)
+      .then((response) => {
+        this.delState(response.ok);
+        if(!response.ok){
+          alert("An error occured while DELET(E)ing schedule.");
+        }
+      })
+      .catch(error => {
+        alert("An error occured while DELET(E)ing schedule: \n\t" + error.message);
+      });
+    }
+  }
+
   delSchedule(){
-    var selSched = this.shadowRoot.getElementById("del_sched").value;
+    try{
+      var selSched_txt = this.shadowRoot.getElementById("del_sched").value;
+      var selSched = Object.assign({}, this.scheds.filter(el => el.txt == selSched_txt)[0].data);
+
+      selSched.startSchedule = this.parseUnixTime(selSched.startSchedule);
+      if(selSched.endSchedule != null){
+        selSched.endSchedule = this.parseUnixTime(selSched.endSchedule);
+      }
+      this.delRequest(selSched);
+    }catch(e){
+      alert("A schedule to delete must be selected.");
+    }
   }
 
   render() {
@@ -263,7 +332,7 @@ class SchedulerCard extends LitElement {
         <div class="SingleEntry" id="delete_schedule">
           <div class="description" id="delete_label">Delete schedule :</div>
           <ha-select id="del_sched" class="del_sched" label="${this.mode}" @selected=${this._onScheduleSelected}>
-            ${this.scheds.map((item) => html`<mwc-list-item .value=${item}>${item}</mwc-list-item>`)}
+            ${this.scheds.map((item) => html`<mwc-list-item .value=${item.txt}>${item.txt}</mwc-list-item>`)}
           </ha-select>
           <mwc-button class="button" @click=${this.delSchedule}>
             <ha-icon class="okTick" id="okTick" icon="mdi:check"></ha-icon>
@@ -286,7 +355,7 @@ class SchedulerCard extends LitElement {
       
       .button{
         display: flex;
-        margin-left: 5px;
+        //margin-left: 5px;
         flex-wrap: wrap;
         align-content: center;
       }
@@ -317,11 +386,11 @@ class SchedulerCard extends LitElement {
       }
 
       .del_sched{
-        width: 330px;
+        width: 315px;
       }
+
       .okTick{
         display: none;
-        padding-right: 5px;
       }
     `
   ]

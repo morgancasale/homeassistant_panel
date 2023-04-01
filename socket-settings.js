@@ -164,6 +164,7 @@ class SocketSettings extends LitElement {
         [0, 1, 2].map((i) =>{
             var schedData = [];
             schedData = this.data["scheduling"].filter(el => el["socketID"] == i);
+            Object.assign(schedData, {deviceID : this.data.deviceID, socketID : i})
             this.shadowRoot.getElementById("sched" + (i+1).toString()).setData(schedData);
         });
         
