@@ -241,7 +241,7 @@ class SchedulerCard extends LitElement {
       tick.icon = "mdi:check";
       tick.style.color = "";
       
-      var text = this.shadowRoot.getElementById("save_btn_text");
+      var text = this.shadowRoot.getElementById("del_btn_text");
       text.innerText = "Deleted";
       text.style.color = "";
     } else {
@@ -250,10 +250,21 @@ class SchedulerCard extends LitElement {
       tick.icon = "mdi:window-close";
       tick.style.color = "red";
 
-      var text = this.shadowRoot.getElementById("save_btn_text");
+      var text = this.shadowRoot.getElementById("del_btn_text");
       text.style.color = "red";
       text.innerText = "Error";
     }
+  }
+
+  resetDelState(){
+    var tick = this.shadowRoot.getElementById("okTick");
+    tick.style.display = "none";
+    tick.icon = "mdi:check";
+    tick.style.color = "";
+
+    var text = this.shadowRoot.getElementById("del_btn_text");
+    text.innerText = "Delete";
+    text.style.color = "";
   }
 
   delRequest(sched){
@@ -336,7 +347,7 @@ class SchedulerCard extends LitElement {
           </ha-select>
           <mwc-button class="button" @click=${this.delSchedule}>
             <ha-icon class="okTick" id="okTick" icon="mdi:check"></ha-icon>
-            <div id="save_btn_text">Delete</div>
+            <div id="del_btn_text">Delete</div>
           </mwc-button>
         </div>
       </div>

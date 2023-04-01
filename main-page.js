@@ -36,7 +36,9 @@ class MainPage extends LitElement {
         this.shadowRoot.getElementById("main-page").style.display = "flex";
 
         this.loadSettings = false;
+        this.resetSavedState();
         this.reRender();
+        this.resetDelState();
     }
 
     async reRender(){
@@ -92,8 +94,14 @@ class MainPage extends LitElement {
 
     SavedState(success){
         if(success){
-            this.shadowRoot.getElementById("okTick").style.display = "block";
-            this.shadowRoot.getElementById("save_btn_text").innerText = "Saved";
+            var tick = this.shadowRoot.getElementById("okTick");
+            tick.style.display = "block";
+            tick.icon = "mdi:check";
+            tick.style.color = "";
+
+            var text = this.shadowRoot.getElementById("save_btn_text");
+            text.innerText = "Saved";
+            text.style.color = "";
         } else {
             var tick = this.shadowRoot.getElementById("okTick");
             tick.style.display = "block";
@@ -104,6 +112,28 @@ class MainPage extends LitElement {
             text.style.color = "red";
             text.innerText = "Error";
         }
+    }
+
+    resetDelState(){
+        var settings = this.shadowRoot.getElementById("socket-settings");
+        [0, 1, 2].map((i) =>{
+            var scheduling = settings.shadowRoot.getElementById("sched" + (i+1).toString());
+            ["OFF", "ON"].map((mode) =>{
+                var scheduler = scheduling.shadowRoot.getElementById("sch_"+mode+"_card");
+                scheduler.resetDelState();
+            });
+        });
+    }
+
+    resetSavedState(){
+        var tick = this.shadowRoot.getElementById("okTick");
+        tick.style.display = "none";
+        tick.icon = "mdi:check";
+        tick.style.color = "";
+
+        var text = this.shadowRoot.getElementById("save_btn_text");
+        text.innerText = "Save";
+        text.style.color = "";
     }
 
     save(){
@@ -189,6 +219,7 @@ class MainPage extends LitElement {
                     </div>
 
                     ${this.loadSettings ? html`<socket-settings id="socket-settings" class="socket-settings" .hass=${this.hass} .extData=${this.extData}></socket-settings>` : ""}
+                    
                     <div class="btn_cont" id="btn_cont">
                         <mwc-button class="back_btn" id="back_btn" @click=${this.hide_socket}>
                             <ha-icon class="arrowLeft" id="arrowLeft" icon="mdi:arrow-left"></ha-icon>

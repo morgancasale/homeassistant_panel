@@ -119,12 +119,18 @@ class SocketSettings extends LitElement {
         this.ShowFaultyBehaviour();
     }
 
+    ShowSocketHandler(event){
+        event.preventDefault();
+        var msg = event.detail.message;
+        this.show_socket_stgs(msg.socket, msg.state);
+    }
+
     getSavedData(element){
-        var sch_data = [];
+        var save_data = [];
         for(let i=1; i<4; i++){
-            sch_data[i-1] = this.shadowRoot.getElementById(element + i).save();
+            save_data[i-1] = this.shadowRoot.getElementById(element + i).save();
         }
-        return sch_data;
+        return save_data;
     }
     
     save(){
@@ -133,12 +139,15 @@ class SocketSettings extends LitElement {
             this.outData.deviceName = (deviceName !="") ? deviceName : this.outData.deviceName;
             
             var sched_data = this.getSavedData("sched");
-
             if(JSON.stringify(sched_data) === JSON.stringify([null, null, null])){
                 this.outData.scheduling = null;
             } else {
                 this.outData.scheduling = sched_data;            
             }
+
+            
+            var offSocket_data = this.getSavedData("socket_menu_exp");
+            Object.assign(this.outData, {enabledSockets : offSocket_data});
             
             Object.assign(this.outData, {"applianceType" : "None"});
             Object.assign(this.outData, {"FBControl" : false, "FBMode" : "Notify"});
@@ -161,11 +170,17 @@ class SocketSettings extends LitElement {
         this.outData = Object.assign({}, data);
         this.data = data;
         this.SetHPMode(data);
+
         [0, 1, 2].map((i) =>{
+            
             var schedData = [];
-            schedData = this.data["scheduling"].filter(el => el["socketID"] == i);
-            Object.assign(schedData, {deviceID : this.data.deviceID, socketID : i})
+            if(this.data.scheduling != null){
+                schedData = this.data["scheduling"].filter(el => el["socketID"] == i);
+                Object.assign(schedData, {deviceID : this.data.deviceID, socketID : i})
+            }
             this.shadowRoot.getElementById("sched" + (i+1).toString()).setData(schedData);
+
+            this.shadowRoot.getElementById("socket_menu_exp" + (i+1).toString()).setData(this.data.enabledSockets[i]);
         });
         
         this.shadowRoot.getElementById("max-pow").setData({
@@ -173,13 +188,17 @@ class SocketSettings extends LitElement {
             maxPower : this.data["maxPower"],
             MPMode : this.data["MPMode"]
         });
+
         this.shadowRoot.getElementById("fault-ctrl").setData(this.data["faultControl"]);
+
         this.shadowRoot.getElementById("par_ctrl").setData({
             parControl : this.data["parControl"],
             parThreshold : this.data["parThreshold"],
             parMode : this.data["parMode"]
         });
+
         this.shadowRoot.getElementById("appl-type-card").setData(this.data["applianceType"]);
+
         this.shadowRoot.getElementById("fault_beh").setData({
             FBControl : this.data["FBControl"],
             FBMode : this.data["FBMode"]
@@ -203,7 +222,7 @@ class SocketSettings extends LitElement {
         this.data = this.defaultData;
 
         return html`
-            <ha-card outlined class="card" id="card" @appl_type_set="${this.ApplSetHandler}">
+            <ha-card outlined class="card" id="card" @appl_type_set="${this.ApplSetHandler}" @offSocket=${this.ShowSocketHandler}>
                 <div class="SingleEntry" id="change_device_name">
                     <div class="description">Change device name:</div>
                     <div class="dev_name_input">
@@ -226,8 +245,8 @@ class SocketSettings extends LitElement {
                 <parasitic-control id="par_ctrl"  .HPMode=${this.data.HPMode}></parasitic-control> 
 
                 <div class="socket" id="socket1">
-                    <div class="SingleEntry" id="socket_menu1" @click="${() => this.show_socket_stgs("1")}">
-                        <socket-menu-exp id="socket_menu_exp1" style="width: 100%" .socket_pos=${"Left Socket"}></socket-menu-exp>
+                    <div class="SingleEntry" id="socket_menu1" @show_socket_stgs="${this.ShowSocketHandler}">
+                        <socket-menu-exp id="socket_menu_exp1" style="width: 100%" .socket=${"1"} .socket_pos=${"Left Socket"}></socket-menu-exp>
                     </div>
 
                     <div class="socket_stgs" id="socket_stgs1" status="hidden">
@@ -236,8 +255,8 @@ class SocketSettings extends LitElement {
                 </div>
 
                 <div id="socket2">
-                    <div class="SingleEntry" id="socket_menu2" @click="${() => this.show_socket_stgs("2")}">
-                        <socket-menu-exp id="socket_menu_exp2" style="width: 100%" .socket_pos=${"Center Socket"}></socket-menu-exp>
+                    <div class="SingleEntry" id="socket_menu2" @show_socket_stgs="${this.ShowSocketHandler}">
+                        <socket-menu-exp id="socket_menu_exp2" style="width: 100%" .socket=${"2"} .socket_pos=${"Center Socket"}></socket-menu-exp>
                     </div>
 
                     <div class="socket_stgs" id="socket_stgs2" status="hidden">
@@ -248,8 +267,8 @@ class SocketSettings extends LitElement {
                 </div>
 
                 <div id="socket3" @appl_type_set="${this.ApplSetHandler}">
-                    <div class="SingleEntry" id="socket_menu3" @click="${() => this.show_socket_stgs("3")}">
-                        <socket-menu-exp id="socket_menu_exp3" style="width: 100%" .socket_pos=${"Right Socket"}></socket-menu-exp>
+                    <div class="SingleEntry" id="socket_menu3" @show_socket_stgs="${this.ShowSocketHandler}">
+                        <socket-menu-exp id="socket_menu_exp3" style="width: 100%" .socket=${"3"} .socket_pos=${"Right Socket"}></socket-menu-exp>
                     </div>
 
                     <div class="socket_stgs" id="socket_stgs3" status="hidden">
