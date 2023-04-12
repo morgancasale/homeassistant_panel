@@ -25,12 +25,28 @@ class MainPage extends LitElement {
     
     constructor(){
         super();
+        window.location.hash = "";
         this.devicesData = {};
         this.houseData = {};
         this.errState = false;
+        this.baseState = window.location.pathname + window.location.search;
     }
 
-    async hide_settings(){
+    onHashChange(){
+        var main_page = window.document.querySelector("body");
+        main_page = main_page.querySelector("home-assistant").shadowRoot
+        main_page = main_page.querySelector("home-assistant-main").shadowRoot.querySelector("main-page");
+
+        if(window.location.hash == ""){
+            window.removeEventListener('hashchange', main_page.onHashChange);
+            main_page.hide_settings();
+        }
+    }
+
+    async hide_settings(){        
+        //history.pushState("", document.title, window.location.pathname + window.location.search);
+        //window.history.replaceState([this.baseState], "miao");
+
         this.fetchData();
         this.shadowRoot.getElementById("container").style.justifyContent = "";
         
@@ -61,6 +77,7 @@ class MainPage extends LitElement {
 
     async reRender(){
         await this.render();
+        await this.requestUpdate();
         await new Promise(r => setTimeout(r, 1));
     }
 
@@ -69,6 +86,9 @@ class MainPage extends LitElement {
     }
 
     async show_socket_settings(socket) {
+        window.location.hash = "#settings";
+        this.setMobileTheme();
+
         this.socketData = this.getSocketData(socket);
         this.extDeviceData = this.socketData;
         this.loadSocketSettings = true;
@@ -81,9 +101,14 @@ class MainPage extends LitElement {
         this.shadowRoot.getElementById("container").style.justifyContent = "center";
         this.shadowRoot.getElementById("socket-settings").style.display = "flex";
         this.shadowRoot.getElementById("btn_cont").style.display = "flex";
+        
+        window.addEventListener('hashchange', this.onHashChange);
     }
 
     async show_house_settings(){
+        window.location.hash = "#settings";
+        this.setMobileTheme();
+
         this.loadHouseSettings = true;
         await this.requestUpdate();
 
@@ -94,19 +119,37 @@ class MainPage extends LitElement {
         this.shadowRoot.getElementById("container").style.justifyContent = "center";
         this.shadowRoot.getElementById("house-settings").style.display = "flex";
         this.shadowRoot.getElementById("btn_cont").style.display = "flex";
+
+        
+        window.addEventListener('hashchange', this.onHashChange);
     }
 
     setMobileTheme() {
-        var window = this.shadowRoot;
-        if (window.innerWidth < 584) {
-            this.style.setProperty("--pd-top", "0px");
-            this.style.setProperty("--border-radius", "0px");
-            this.style.setProperty("--border-width", "0px");
-            this.container_width = "100%";
+        //var window = document.querySelectorAll("home-assistant")[0].shadowRoot.querySelectorAll("home-assistant-main")[0].shadowRoot.querySelectorAll("app-drawer-layout")[0].shadowRoot.querySelector("#contentContainer");
+        var content = this.parentElement.parentElement.parentElement.shadowRoot.querySelector("#contentContainer")
+        var width = parseFloat(getComputedStyle(content).getPropertyValue('width'));
+
+        var cont = this.shadowRoot.querySelector("#container");
+
+        cont.style.setProperty("--btn-cont-width", String(width));
+
+        if(width < 584){
+            var zoom = width/584-0.01;
+            content.style.setProperty("--content-zoom", String(zoom));
+            cont.style.setProperty("--ha-card-border-radius", "0px");
+            cont.style.setProperty("--pd-top", "0px");
+            cont.style.setProperty("--card-width", "100%");
+            cont.style.setProperty("--side-bd", "none");
+            
+            cont.style.setProperty("--btn-zoom", "1.5");
         } else {
-            this.style.setProperty("--body-pd-top", "56px");
-            this.style.setProperty("--border-radius", "");
-            this.style.setProperty("--border-width", "");
+            content.style.setProperty("--content-zoom", String(1));
+            cont.style.setProperty("--ha-card-border-radius", "");
+            cont.style.setProperty("--pd-top", "56px");            
+            cont.style.setProperty("--card-width", "584px");
+            cont.style.setProperty("--side-bd", "");
+
+            cont.style.setProperty("--btn-zoom", "1");
         }
     }
 
@@ -122,6 +165,10 @@ class MainPage extends LitElement {
     errorHandler(ev){
         ev.preventDefault();
         this.errState = ev.detail.message;
+    }
+
+    sendNotification(msg, title="Smart Sockets"){
+        this.hass.callService("notify", "persistent_notification", {message: msg, title: title});
     }
 
     SavedState(success){
@@ -168,9 +215,14 @@ class MainPage extends LitElement {
         text.style.color = "";
     }
 
+    getBodyResult(data){
+        return data.split("<p>")[1].split("</p>")[0];
+    }
+
     save_socket_settings(){
         this.socketData = this.shadowRoot.getElementById("socket-settings").save();
         this.socketData.deviceID = this.extDeviceData.deviceID;
+        this.socketData.deviceName = this.extDeviceData.deviceName;
 
         var cond = (this.socketData.deviceName != this.extDeviceData.deviceName) | (this.socketData.deviceName == null);
         this.socketData.deviceName = (cond) ? this.socketData.deviceName : this.extDeviceData.deviceName;
@@ -191,10 +243,18 @@ class MainPage extends LitElement {
         if(!this.errState){
             fetch(url, request)
             .then((response) => {
-                this.SavedState(response.ok);
+                this.SavedState((this.response=response).ok);
+                return response.text();
+            })
+            .then((txt) => {
+                if(!this.response.ok){
+                    throw new Error(this.getBodyResult(txt));
+                }
             })
             .catch(error => {
-                throw new Error("An error occured while performing PUT request: \n\t" + error.message);
+                var msg = "An error occured while saving Sockets settings: \n\t" + error.message;
+                this.sendNotification(msg);
+                throw new Error(msg);
             });
         }
     }
@@ -219,10 +279,18 @@ class MainPage extends LitElement {
         if(!this.errState){
             fetch(url, request)
             .then((response) => {
-                this.SavedState(response.ok);
+                this.SavedState((this.response=response).ok);
+                return response.text();
+            })
+            .then((txt) => {
+                if(!this.response.ok){
+                    throw new Error(this.getBodyResult(txt));
+                }
             })
             .catch(error => {
-                throw new Error("An error occured while performing PUT request: \n\t" + error.message);
+                var msg = error.message;
+                this.sendNotification(msg);
+                throw new Error("An error occured while saving House settings:\n\t" + error.message);
             });
         }
     }
@@ -235,7 +303,8 @@ class MainPage extends LitElement {
                 this.save_socket_settings();
             }
         } catch(e){
-            alert("An error occured while saving settings: \n\t" + e.message);
+            var msg = "An error occured while saving settings: \n\t" + e.message
+            this.sendNotification(msg);
         }
     }
 
@@ -249,14 +318,26 @@ class MainPage extends LitElement {
         params = new URLSearchParams(params);
 
         fetch(url + params)
-        .then((response) => response.json())
-        .then((devicesData) => {
-            this.devicesData = devicesData;
-            this.sockets = [];
-            this.devicesData.map((socket) => this.sockets.push(socket["deviceName"]));
+        .then((response) => {
+            if(response.ok){
+                return (this.response=response).json();
+            } else {
+                return (this.response=response).text();
+            }
+        })
+        .then((result) => {
+            if(!(typeof result === 'string' || result instanceof String)){
+                this.devicesData = result;
+                this.sockets = [];
+                this.devicesData.map((socket) => this.sockets.push(socket["deviceName"]));
+            } else {
+                throw new Error(this.getBodyResult(result));
+            }
         })
         .catch(error => {
-            throw error; // if there's an error, it will be logged to the console
+            var msg = "An error occured while retriving Socket Settings: \n\t" + error.message;
+            this.sendNotification(msg);
+            throw new Error(msg);
         });
     }
 
@@ -269,14 +350,30 @@ class MainPage extends LitElement {
         };
         params = new URLSearchParams(params);
 
-        fetch(url + params)
-        .then((response) => response.json())
-        .then((houseData) => {
-            this.houseData = houseData[0];
-        })
-        .catch(error => {
-            throw error; // if there's an error, it will be logged to the console
-        });
+        try{
+            fetch(url + params)
+            .then((response) => {
+                if(response.ok){
+                    return (this.response=response).json();
+                } else {
+                    return (this.response=response).text();
+                }
+            })
+            .then((result) => {
+                if(!(typeof result === 'string' || result instanceof String)){
+                    this.houseData = result[0];
+                } else {
+                    throw new Error(this.getBodyResult(result));
+                }
+            })
+            .catch(error => {
+                var msg = "An error occured while retriving House settings: \n\t" + error.message;
+                this.sendNotification(msg);
+                throw new Error(msg);
+            });
+        } catch(e){
+            throw e;
+        }
     }
 
     fetchData(){ // Fetch sockets settings
@@ -284,7 +381,9 @@ class MainPage extends LitElement {
             this.fetchSocketSettings();
             this.fetchHouseSettings();
         } catch(e){
-            alert("An error occurred while fetching settings: \n\t" + e.message);
+            var msg = "An error occurred while fetching settings: \n\t" + e.message;
+            this.sendNotification(msg);
+            alert(msg);
         }
     }
 
@@ -303,25 +402,22 @@ class MainPage extends LitElement {
                 <div> Loading... </div>
             `;
         } else {
-            this.setMobileTheme();
+            //this.setMobileTheme();
             return html`
-                <app-header fixed="" slot="header"> </app-header>
+                <div id="main-page" class="main-page" @click=${this.loadHACards} @hide_settings=${this.hide_settings}>
+                    ${this.sockets.map((item) => html`<div class="child">
+                        <ha-card outlined class="socket_button" @click="${() => this.show_socket_settings(item)}">
+                            <div name="button_text" class="button_text">${item}</div>
+                        </ha-card>
+                    </div>`)}
+                </div>
                 
                 <div class="container" id="container" @err_occ=${this.errorHandler} @click=${this.resetSavedState}>
-                    
-                    <div id="main-page" class="main-page" @click="${this.loadHACards}">
-                        ${this.sockets.map((item) => html`<div class="child">
-                            <ha-card outlined class="socket_button" @click="${() => this.show_socket_settings(item)}">
-                                <div name="button_text" class="button_text">${item}</div>
-                            </ha-card>
-                        </div>`)}
-                    </div>
-
                     ${this.loadSocketSettings ? html`<socket-settings id="socket-settings" class="settings" .hass=${this.hass} .extData=${this.extDeviceData}></socket-settings>` : ""}
                     
                     ${this.loadHouseSettings ? html`<house-settings id="house-settings" class="settings" .hass=${this.hass} .extData=${this.houseData}></house-settings>` : ""}
 
-                    <div class="btn_cont" id="btn_cont">
+                    <div class="btn btn_cont" id="btn_cont">
                         <mwc-button class="back_btn" id="back_btn" @click=${this.hide_settings}>
                             <ha-icon class="arrowLeft" id="arrowLeft" icon="mdi:arrow-left"></ha-icon>
                         </mwc-button>
@@ -329,15 +425,13 @@ class MainPage extends LitElement {
                             <ha-icon class="okTick" id="okTick" icon="mdi:check"></ha-icon>
                             <div id="save_btn_text">Save</div>
                         </mwc-button>
-                    </div>
+                    </div>                    
+                </div>                
 
-                    <div class="gen_settings_button" id="gen_settings_button" @click=${this.show_house_settings}>
-                        <div class="icon_dot" id="icon_dot">
-                            <ha-icon class="cog" id="cog" icon="mdi:cog"></ha-icon> 
-                        </div>
+                <div class="gen_settings_button" id="gen_settings_button" @click=${this.show_house_settings}>
+                    <div class="icon_dot" id="icon_dot">
+                        <ha-icon class="cog" id="cog" icon="mdi:cog"></ha-icon> 
                     </div>
-
-                    
                 </div>
             `;
         }
@@ -345,17 +439,18 @@ class MainPage extends LitElement {
 
     static get styles() {
         return css`
-            .container{
-                float: left;
-                margin-top: 3px;
-                margin-left: 5px;
+            .container{                                
+                zoom: var(--content-zoom);
                 display: flex;
-                flex-wrap: wrap;
-                align-content: flex-start;
+                flex-flow: column wrap;
+                align-content: center;
             }
             
             .main-page{
                 display: flex;
+                margin-top: 20px;
+                flex-wrap: wrap;
+                justify-content: center;   
             }
 
             .child{
@@ -379,13 +474,17 @@ class MainPage extends LitElement {
 
             .settings{
                 display: none;
-                padding-top: 56px; //var(--pd-top);
+                padding-top: var(--pd-top);
+            }
+
+            .btn{
+                zoom: var(--btn-zoom);
             }
 
             .btn_cont{
                 margin-top: 10px;
                 display: none;
-                width: 582px;
+                width: var(--btn-cont-width);
             }
 
             .save_btn{
@@ -398,6 +497,7 @@ class MainPage extends LitElement {
             }
 
             .gen_settings_button{
+                zoom: 1.2;
                 position: fixed;
                 bottom: 20px;
                 right: 20px;

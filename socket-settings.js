@@ -221,14 +221,16 @@ class SocketSettings extends LitElement {
 
         return html`
             <ha-card outlined class="card" id="card" @appl_type_set="${this.ApplSetHandler}" @offSocket=${this.ShowSocketHandler}>
-                <div class="SingleEntry" id="change_device_name">
-                    <div class="description">Change device name:</div>
-                    <div class="dev_name_input">
-                        <ha-form>
-                            <ha-textfield id="dev_input_field" label=${this.extData.deviceName}>Name</ha-textfield>
-                        </ha-form>
+                <ha-card>
+                    <div class="SingleEntry" id="change_device_name">
+                        <div class="description">Change device name:</div>
+                        <div class="dev_name_input">
+                            <ha-form>
+                                <ha-textfield id="dev_input_field" label=${this.extData.deviceName}>Name</ha-textfield>
+                            </ha-form>
+                        </div>
                     </div>
-                </div>
+                </ha-card>
                 <ha-card>
                     <div class="SingleEntry" id="HP_btn">
                         <div class="description" id="HP">High Power Mode</div>
@@ -242,37 +244,39 @@ class SocketSettings extends LitElement {
                 <fault-control id="fault-ctrl"  .HPMode=${this.data.HPMode}></fault-control>
                 <parasitic-control id="par_ctrl"  .HPMode=${this.data.HPMode}></parasitic-control> 
 
-                <div class="socket" id="socket1">
-                    <div class="SingleEntry" id="socket_menu1" @show_socket_stgs="${this.ShowSocketHandler}">
-                        <socket-menu-exp id="socket_menu_exp1" style="width: 100%" .socket=${"1"} .socket_pos=${"Left Socket"}></socket-menu-exp>
+                <ha-card>
+                    <div class="socket" id="socket1">
+                        <div class="SingleEntry" id="socket_menu1" @show_socket_stgs="${this.ShowSocketHandler}">
+                            <socket-menu-exp id="socket_menu_exp1" style="width: 100%" .socket=${"1"} .socket_pos=${"Left Socket"}></socket-menu-exp>
+                        </div>
+
+                        <div class="socket_stgs" id="socket_stgs1" status="hidden">
+                            <scheduling-card id="sched1" .hass=${this.hass} .socketID=${0} .HPMode=${this.data.HPMode}></scheduling-card>                        
+                        </div>
                     </div>
 
-                    <div class="socket_stgs" id="socket_stgs1" status="hidden">
-                        <scheduling-card id="sched1" .hass=${this.hass} .socketID=${0} .HPMode=${this.data.HPMode}></scheduling-card>                        
-                    </div>
-                </div>
+                    <div id="socket2">
+                        <div class="SingleEntry" id="socket_menu2" @show_socket_stgs="${this.ShowSocketHandler}">
+                            <socket-menu-exp id="socket_menu_exp2" style="width: 100%" .socket=${"2"} .socket_pos=${"Center Socket"}></socket-menu-exp>
+                        </div>
 
-                <div id="socket2">
-                    <div class="SingleEntry" id="socket_menu2" @show_socket_stgs="${this.ShowSocketHandler}">
-                        <socket-menu-exp id="socket_menu_exp2" style="width: 100%" .socket=${"2"} .socket_pos=${"Center Socket"}></socket-menu-exp>
-                    </div>
-
-                    <div class="socket_stgs" id="socket_stgs2" status="hidden">
-                        <scheduling-card id="sched2" .hass=${this.hass} .socketID=${1} .HPMode=${false}></scheduling-card>
-                        <appl-type-card id="appl-type-card" class="appl-type-card" .socket_num=${"2"} .HPMode=${this.data.HPMode}></appl-type-card>
-                        <faulty-behaviour-card id="fault_beh" class="fault_beh" ></faulty-behaviour-card>
-                    </div>
-                </div>
-
-                <div id="socket3" @appl_type_set="${this.ApplSetHandler}">
-                    <div class="SingleEntry" id="socket_menu3" @show_socket_stgs="${this.ShowSocketHandler}">
-                        <socket-menu-exp id="socket_menu_exp3" style="width: 100%" .socket=${"3"} .socket_pos=${"Right Socket"}></socket-menu-exp>
+                        <div class="socket_stgs" id="socket_stgs2" status="hidden">
+                            <scheduling-card id="sched2" .hass=${this.hass} .socketID=${1} .HPMode=${false}></scheduling-card>
+                            <appl-type-card id="appl-type-card" class="appl-type-card" .socket_num=${"2"} .HPMode=${this.data.HPMode}></appl-type-card>
+                            <faulty-behaviour-card id="fault_beh" class="fault_beh" ></faulty-behaviour-card>
+                        </div>
                     </div>
 
-                    <div class="socket_stgs" id="socket_stgs3" status="hidden">
-                        <scheduling-card id="sched3" .hass=${this.hass} .socketID=${2} .HPMode=${this.data.HPMode}></scheduling-card>
+                    <div id="socket3" @appl_type_set="${this.ApplSetHandler}">
+                        <div class="SingleEntry" id="socket_menu3" @show_socket_stgs="${this.ShowSocketHandler}">
+                            <socket-menu-exp id="socket_menu_exp3" style="width: 100%" .socket=${"3"} .socket_pos=${"Right Socket"}></socket-menu-exp>
+                        </div>
+
+                        <div class="socket_stgs" id="socket_stgs3" status="hidden">
+                            <scheduling-card id="sched3" .hass=${this.hass} .socketID=${2} .HPMode=${this.data.HPMode}></scheduling-card>
+                        </div>
                     </div>
-                </div>
+                </ha-card>
             </ha-card>
         `;
     }
@@ -281,16 +285,6 @@ class SocketSettings extends LitElement {
         generalStyles,
 
         css`
-            .card{
-                width: 584px;
-                display: flex;
-                flex-wrap: wrap;
-                align-content: flex-start;
-                justify-content: center;
-                //border-radius: var(--border-radius);
-                //border-width: var(--border-width);
-            }
-
             .c_card{
                 margin-bottom: 5px;
             }

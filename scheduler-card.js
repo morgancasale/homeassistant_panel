@@ -267,6 +267,10 @@ class SchedulerCard extends LitElement {
     text.style.color = "";
   }
 
+  sendNotification(msg, title="Smart Sockets"){
+    this.hass.callService("notify", "persistent_notification", {message: msg, title: title});
+  }
+
   delRequest(sched){
     var url = "http://192.168.2.145:8099/delDevSchedule";
     var request = {
@@ -284,13 +288,17 @@ class SchedulerCard extends LitElement {
     if(!this.errState){
       fetch(url, request)
       .then((response) => {
-        this.delState(response.ok);
-        if(!response.ok){
-          alert("An error occured while DELET(E)ing schedule.");
+        this.delState((this.response=response).ok);
+        return response.text();
+      })
+      .then((txt) => {
+        if(!this.response.ok){
+          throw new Error(this.getBodyResult(txt));
         }
       })
       .catch(error => {
-        alert("An error occured while DELET(E)ing schedule: \n\t" + error.message);
+        msg = "An error occured while DELET(E)ing schedule: \n\t" + error.message 
+        this.sendNotification(msg);
       });
     }
   }

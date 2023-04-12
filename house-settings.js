@@ -47,16 +47,19 @@ class HouseSettings extends LitElement {
     render() {
         return html`
             <ha-card outlined class="card" id="card" @offSocket=${this.ShowSocketHandler}>
-                <div class="SingleEntry" id="change_house_name">
-                    <div class="description">Change house name:</div>
-                    <div class="house_name_input">
-                        <ha-form>
-                            <ha-textfield id="house_input_field" label=${this.extData.houseName}>Name</ha-textfield>
-                        </ha-form>
+                <ha-card>
+                    <div class="SingleEntry" id="change_house_name">
+                        <div class="description">Change house name:</div>
+                        <div class="house_name_input">
+                            <ha-form>
+                                <ha-textfield id="house_input_field" label=${this.extData.houseName}>Name</ha-textfield>
+                            </ha-form>
+                        </div>
                     </div>
-                </div>
-
-                <electric-meter-stgs id="el_meter_stgs" label=${this.extData.powerLimit}></electric-meter-stgs>
+                </ha-card>
+                <ha-card>
+                    <electric-meter-stgs id="el_meter_stgs" label=${this.extData.powerLimit}></electric-meter-stgs>
+                </ha-card>
             </ha-card>
         `;
     }
@@ -65,16 +68,6 @@ class HouseSettings extends LitElement {
         generalStyles,
 
         css`
-            .card{
-                width: 584px;
-                display: flex;
-                flex-wrap: wrap;
-                align-content: flex-start;
-                justify-content: center;
-                //border-radius: var(--border-radius);
-                //border-width: var(--border-width);
-            }
-
             .c_card{
                 margin-bottom: 5px;
             }
