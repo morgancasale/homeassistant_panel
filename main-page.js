@@ -63,6 +63,7 @@ class MainPage extends LitElement {
         }
 
         this.shadowRoot.getElementById("btn_cont").style.display = "none";
+        this.shadowRoot.getElementById("offline_text").style.display = "none";
 
         this.shadowRoot.getElementById("main-page").style.display = "flex";
 
@@ -92,7 +93,7 @@ class MainPage extends LitElement {
         window.location.hash = "#settings";
         this.setMobileTheme();
 
-        this.socketData = this.getSocketData(socket);
+        this.socketData = this.getSocketData(socket.deviceName);
         this.extDeviceData = this.socketData;
         this.loadSocketSettings = true;
         await this.reRender();
@@ -104,6 +105,10 @@ class MainPage extends LitElement {
         this.shadowRoot.getElementById("container").style.justifyContent = "center";
         this.shadowRoot.getElementById("socket-settings").style.display = "flex";
         this.shadowRoot.getElementById("btn_cont").style.display = "flex";
+
+        if(!socket.online){
+            this.shadowRoot.getElementById("offline_text").style.display = "flex"; 
+        }
         
         window.addEventListener('hashchange', this.onHashChange);
     }
@@ -229,6 +234,8 @@ class MainPage extends LitElement {
         var cond = (this.socketData.deviceName != this.extDeviceData.deviceName) | (this.socketData.deviceName == null);
         this.socketData.deviceName = (cond) ? this.socketData.deviceName : this.extDeviceData.deviceName;
 
+        this.extDeviceData.deviceName = this.socketData.deviceName;
+
         var url = "http://" + this.catalogAddress + ":" + String(this.catalogPort) + "/setDeviceSettings";
         var request = {
             method: "PUT", // *GET, POST, PUT, DELETE, etc.
@@ -331,7 +338,9 @@ class MainPage extends LitElement {
             if(!(typeof result === 'string' || result instanceof String)){
                 this.devicesData = result;
                 this.sockets = [];
-                this.devicesData.map((socket) => this.sockets.push(socket["deviceName"]));
+                this.devicesData.map((socket) => 
+                    this.sockets.push({deviceName : socket["deviceName"], online : socket["Online"]})
+                );
             } else {
                 throw new Error(this.getBodyResult(result));
             }
@@ -407,11 +416,16 @@ class MainPage extends LitElement {
             //this.setMobileTheme();
             return html`
                 <div id="main-page" class="main-page" @click=${this.loadHACards} @hide_settings=${this.hide_settings}>
-                    ${this.sockets.map((item) => html`<div class="child">
-                        <ha-card outlined class="socket_button" @click="${() => this.show_socket_settings(item)}">
-                            <div name="button_text" class="button_text">${item}</div>
-                        </ha-card>
-                    </div>`)}
+                    ${this.sockets.map((item) => {
+                        var color = "color: " + (item.online ? "" : "red");
+                        return html`
+                            <div class="child">
+                            <ha-card outlined class="socket_button" @click="${() => this.show_socket_settings(item)}">
+                                <div name="button_text" class="button_text" style=${color}>${item.deviceName}</div>
+                            </ha-card>
+                            </div>
+                        `
+                    })}
                 </div>
                 
                 <div class="container" id="container" @err_occ=${this.errorHandler} @click=${this.resetSavedState}>
@@ -423,6 +437,9 @@ class MainPage extends LitElement {
                         <mwc-button class="back_btn" id="back_btn" @click=${this.hide_settings}>
                             <ha-icon class="arrowLeft" id="arrowLeft" icon="mdi:arrow-left"></ha-icon>
                         </mwc-button>
+                        <div id="offline_cont" class="offline_cont">
+                            <div id="offline_text" class="offline_text">OFFLINE</div>
+                        </div>
                         <mwc-button class="save_btn" id="save_btn" @click=${this.save}>
                             <ha-icon class="okTick" id="okTick" icon="mdi:check"></ha-icon>
                             <div id="save_btn_text">Save</div>
@@ -493,8 +510,13 @@ class MainPage extends LitElement {
                 text-align: center;
             }
 
-            .save_btn{
-                margin-left: auto;
+            .offline_cont{
+                margin: auto;
+            }
+            
+            .offline_text{
+                display: none;
+                color: #f04c41;
             }
 
             .okTick{
