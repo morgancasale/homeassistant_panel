@@ -25,6 +25,9 @@ class SchedulerCard extends LitElement {
     };
   }
 
+  catalogAddress = "192.168.2.145";
+  catalogPort = 8099;
+
   constructor(){
     super();
     this.data = {
@@ -272,7 +275,7 @@ class SchedulerCard extends LitElement {
   }
 
   delRequest(sched){
-    var url = "http://192.168.2.145:8099/delDevSchedule";
+    var url = "http://" + this.catalogAddress + ":" + String(this.catalogPort) + "/delDevSchedule";
     var request = {
       method: "DELETE", // *GET, POST, PUT, DELETE, etc.
       mode: "cors", // no-cors, *cors, same-origin

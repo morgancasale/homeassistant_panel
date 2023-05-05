@@ -32,6 +32,9 @@ class MainPage extends LitElement {
         this.baseState = window.location.pathname + window.location.search;
     }
 
+    catalogAddress = "192.168.2.145";
+    catalogPort = 8099;
+
     onHashChange(){
         var main_page = window.document.querySelector("body");
         main_page = main_page.querySelector("home-assistant").shadowRoot
@@ -222,12 +225,11 @@ class MainPage extends LitElement {
     save_socket_settings(){
         this.socketData = this.shadowRoot.getElementById("socket-settings").save();
         this.socketData.deviceID = this.extDeviceData.deviceID;
-        this.socketData.deviceName = this.extDeviceData.deviceName;
 
         var cond = (this.socketData.deviceName != this.extDeviceData.deviceName) | (this.socketData.deviceName == null);
         this.socketData.deviceName = (cond) ? this.socketData.deviceName : this.extDeviceData.deviceName;
 
-        var url = "http://192.168.2.145:8099/setDeviceSettings";
+        var url = "http://" + this.catalogAddress + ":" + String(this.catalogPort) + "/setDeviceSettings";
         var request = {
             method: "PUT", // *GET, POST, PUT, DELETE, etc.
             mode: "cors", // no-cors, *cors, same-origin
@@ -263,7 +265,7 @@ class MainPage extends LitElement {
         var newHouseData = this.shadowRoot.getElementById("house-settings").save();
         Object.assign(newHouseData, { houseID : this.houseData.houseID })
 
-        var url = "http://192.168.2.145:8099/setHouseSettings";
+        var url = "http://" + this.catalogAddress + ":" + String(this.catalogPort) + "/setHouseSettings";
         var request = {
             method: "PUT", // *GET, POST, PUT, DELETE, etc.
             mode: "cors", // no-cors, *cors, same-origin
@@ -309,7 +311,7 @@ class MainPage extends LitElement {
     }
 
     fetchSocketSettings(){
-        var url = "http://192.168.2.145:8099/getInfo?";
+        var url = "http://" + this.catalogAddress + ":" + String(this.catalogPort) + "/getInfo?";
         var params = {
             table : "DeviceSettings",
             keyName : "deviceID",
@@ -342,7 +344,7 @@ class MainPage extends LitElement {
     }
 
     fetchHouseSettings(){
-        var url = "http://192.168.2.145:8099/getInfo?";
+        var url = "http://" + this.catalogAddress + ":" + String(this.catalogPort) + "/getInfo?";
         var params = {
             table : "HouseSettings",
             keyName : "houseID",
@@ -485,6 +487,10 @@ class MainPage extends LitElement {
                 margin-top: 10px;
                 display: none;
                 width: var(--btn-cont-width);
+            }
+
+            .button_text{
+                text-align: center;
             }
 
             .save_btn{

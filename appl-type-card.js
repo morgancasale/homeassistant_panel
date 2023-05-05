@@ -19,6 +19,9 @@ class ApplianceTypeCard extends LitElement {
             appliances: { type: Array }
         };
     }
+
+    catalogAddress = "192.168.2.145";
+    catalogPort = 8099;
     
     constructor(){
         super();
@@ -63,7 +66,7 @@ class ApplianceTypeCard extends LitElement {
     }
 
     async getAppliances(){
-        var url = "http://192.168.2.145:8099/getInfo?";
+        var url = "http://" + this.catalogAddress + ":" + String(this.catalogPort) + "/getInfo?";
         var params = {
             table : "AppliancesInfo",
             keyName : "applianceType",
